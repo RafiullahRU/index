@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <style>
-:root{--u:min(1vw,1.15vh);--c1:#00d2ff;--c2:#00ff88;--hot:#ff3b5c;--gold:#ffc83d;--vio:#8a2be2}
+:root{--u:min(1vw,1.15vh);--g:calc(var(--u)*2.8);--c1:#00d2ff;--c2:#00ff88;--hot:#ff3b5c;--gold:#ffc83d;--vio:#8a2be2}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{width:100%;height:100%;background:transparent;overflow:hidden;color:#fff;
   font-family:-apple-system,"SF Pro Display",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
@@ -25,7 +25,7 @@ html,body{width:100%;height:100%;background:transparent;overflow:hidden;color:#f
 #title:empty{display:none}
 
 /* ---------- MESSAGE ---------- */
-#msg{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(var(--u)*29);max-width:92%;
+#msg{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(var(--g) + var(--u)*25);max-width:92%;
   padding:calc(var(--u)*1.2) calc(var(--u)*3.2);border-radius:999px;font-weight:800;
   font-size:calc(var(--u)*3.2);color:#1a1200;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   background:linear-gradient(90deg,#ffd75e,#ffb020,#ffd75e);background-size:200% 100%;
@@ -33,7 +33,7 @@ html,body{width:100%;height:100%;background:transparent;overflow:hidden;color:#f
 #msg.on{display:block}
 
 /* ---------- SCORE BAR (always bottom) ---------- */
-#dock{position:absolute;left:calc(var(--u)*3);right:calc(var(--u)*3);bottom:calc(var(--u)*4);animation:rise .8s cubic-bezier(.2,.9,.3,1.2) both}
+#dock{position:absolute;left:calc(var(--u)*3);right:calc(var(--u)*3);bottom:var(--g);animation:rise .8s cubic-bezier(.2,.9,.3,1.2) both}
 #bar{position:relative;display:grid;grid-template-columns:1.3fr 1.05fr .95fr;align-items:center;gap:calc(var(--u)*1.5);
   padding:calc(var(--u)*2.4) calc(var(--u)*2.4) calc(var(--u)*2);border-radius:calc(var(--u)*4);
   background:linear-gradient(135deg,rgba(6,10,26,.93),rgba(24,10,54,.93));
@@ -82,7 +82,7 @@ html,body{width:100%;height:100%;background:transparent;overflow:hidden;color:#f
 .hit{animation:hit .8s cubic-bezier(.2,1.4,.3,1)}
 .zoom{animation:zoom 1s cubic-bezier(.2,1.4,.3,1)}
 .bump{animation:bump .6s ease}
-.fl{position:absolute;bottom:calc(var(--u)*27);font-weight:900;font-size:calc(var(--u)*6);white-space:nowrap;
+.fl{position:absolute;bottom:calc(var(--g) + var(--u)*23);font-weight:900;font-size:calc(var(--u)*6);white-space:nowrap;
   text-shadow:0 0 calc(var(--u)*2.5) currentColor,0 calc(var(--u)*.4) calc(var(--u)*1) rgba(0,0,0,.8);
   animation:floatup 1.5s ease-out forwards;pointer-events:none}
 
@@ -102,7 +102,7 @@ html,body{width:100%;height:100%;background:transparent;overflow:hidden;color:#f
 .pt{position:absolute;left:50%;top:50%;font-size:calc(var(--u)*6);opacity:0;animation:burst 1.5s ease-out forwards}
 
 /* ---------- PLAYER / BOWLER CARD ---------- */
-#card{position:absolute;left:50%;bottom:calc(var(--u)*29);width:calc(var(--u)*92);max-width:94%;
+#card{position:absolute;left:50%;bottom:calc(var(--g) + var(--u)*25);width:calc(var(--u)*92);max-width:94%;
   border-radius:calc(var(--u)*4);padding:calc(var(--u)*3);
   background:linear-gradient(150deg,rgba(4,8,22,.96),rgba(30,10,60,.96));
   border:calc(var(--u)*.3) solid rgba(0,210,255,.55);box-shadow:0 0 calc(var(--u)*7) rgba(0,210,255,.45);
@@ -125,7 +125,7 @@ html,body{width:100%;height:100%;background:transparent;overflow:hidden;color:#f
 .sb span{display:block;color:#9aa6bd;font-weight:800;font-size:calc(var(--u)*2.3);letter-spacing:.14em;margin-top:calc(var(--u)*.4)}
 
 /* ---------- FULL SCOREBOARD ---------- */
-#board{position:absolute;z-index:5;inset:calc(var(--u)*10) calc(var(--u)*4) calc(var(--u)*30);border-radius:calc(var(--u)*4);
+#board{position:absolute;z-index:5;inset:calc(var(--u)*10) calc(var(--u)*4) calc(var(--g) + var(--u)*26);border-radius:calc(var(--u)*4);
   background:linear-gradient(160deg,rgba(4,8,22,.96),rgba(22,10,50,.96));border:calc(var(--u)*.3) solid rgba(0,210,255,.5);
   box-shadow:0 0 calc(var(--u)*8) rgba(0,210,255,.35);padding:calc(var(--u)*3.5);overflow:hidden;
   opacity:0;transform:translateY(8%) scale(.96);pointer-events:none;transition:all .5s cubic-bezier(.2,.9,.3,1.1)}
@@ -210,6 +210,8 @@ html,body{width:100%;height:100%;background:transparent;overflow:hidden;color:#f
     if (h < w * 0.3) h = Math.max((screen && screen.height) || 0, Math.round(w * 16 / 9));
     var st = $('stage'); st.style.width = w + 'px'; st.style.height = h + 'px';
     document.documentElement.style.setProperty('--u', Math.min(w / 100, h * 1.15 / 100) + 'px');
+    var gm = location.search.match(/gap=([0-9.]+)/);
+    if (gm) document.documentElement.style.setProperty('--g', 'calc(var(--u)*' + gm[1] + ')');
     if (debug){ var d = $('dbg'); d.style.display = 'block'; d.textContent = w + 'x' + h + ' u=' + Math.min(w / 100, h * 1.15 / 100).toFixed(2); }
   }
   fit(); window.addEventListener('resize', fit); setTimeout(fit, 300); setTimeout(fit, 1500);
