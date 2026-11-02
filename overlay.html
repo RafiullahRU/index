@@ -21,8 +21,9 @@ html,body{width:100%;height:100%;background:transparent;overflow:hidden;color:#f
 #live i{width:calc(var(--u)*2);height:calc(var(--u)*2);border-radius:50%;background:#fff;animation:blink 1s infinite}
 
 /* ---------- SCORE BAR (always bottom) ---------- */
-#dock{position:absolute;left:calc(var(--u)*3);right:calc(var(--u)*3);bottom:var(--g);animation:rise .8s cubic-bezier(.2,.9,.3,1.2) both}
-#bar{position:relative;display:grid;grid-template-columns:1.3fr 1.05fr .95fr;align-items:center;gap:calc(var(--u)*1.5);
+#dock{position:absolute;left:calc(var(--u)*3 + var(--sx,0px));right:calc(var(--u)*3 - var(--sx,0px));bottom:var(--g);
+  display:flex;justify-content:center;animation:rise .8s cubic-bezier(.2,.9,.3,1.2) both}
+#bar{position:relative;width:100%;max-width:calc(var(--u)*118);display:grid;grid-template-columns:1.3fr 1.05fr .95fr;align-items:center;gap:calc(var(--u)*1.5);
   padding:calc(var(--u)*2.4) calc(var(--u)*2.4) calc(var(--u)*2);border-radius:calc(var(--u)*4);
   background:linear-gradient(135deg,rgba(6,10,26,.93),rgba(24,10,54,.93));
   border:calc(var(--u)*.3) solid rgba(0,210,255,.5);
@@ -132,6 +133,26 @@ html,body{width:100%;height:100%;background:transparent;overflow:hidden;color:#f
 .ov .bs{flex:1;display:flex;gap:calc(var(--u)*.7);flex-wrap:wrap}.ov .bs .b{width:calc(var(--u)*4);height:calc(var(--u)*4);font-size:calc(var(--u)*2.2)}
 .ov .r{color:var(--c2);font-weight:900}
 
+/* ---------- LANDSCAPE: score bar is 96% wide with 2% margin on each side ---------- */
+body.land #dock{left:calc(2% + var(--sx,0px));right:calc(2% - var(--sx,0px))}
+body.land #bar{max-width:none}
+
+/* ---------- LANDSCAPE: compact two-column team board ---------- */
+body.land #board{inset:calc(var(--u)*5) calc(var(--u)*10) calc(var(--g) + var(--u)*24);padding:calc(var(--u)*2) calc(var(--u)*2.6);
+  display:grid;grid-template-columns:1fr 1fr;column-gap:calc(var(--u)*2.4);align-content:start}
+body.land #bt{grid-column:1/-1;font-size:calc(var(--u)*3);margin-bottom:calc(var(--u)*1)}
+body.land .card{margin-bottom:0;padding:calc(var(--u)*1.4)}
+body.land .card .h{padding-bottom:calc(var(--u)*.7);margin-bottom:calc(var(--u)*.4)}
+body.land .card .h b{font-size:calc(var(--u)*2.8)}
+body.land .card .h span{font-size:calc(var(--u)*3.6)}
+body.land .row{padding:calc(var(--u)*.5) 0;font-size:calc(var(--u)*2.2);flex-wrap:wrap}
+body.land .row .x{font-size:calc(var(--u)*1.7)}
+body.land .ov{padding:calc(var(--u)*.4) 0;font-size:calc(var(--u)*1.9);gap:calc(var(--u)*.8)}
+body.land .ov .o{width:calc(var(--u)*6)}
+body.land .ov .bw{width:calc(var(--u)*9)}
+body.land .ov .bs{flex-wrap:nowrap}
+body.land .ov .bs .b{width:calc(var(--u)*2.8);height:calc(var(--u)*2.8);font-size:calc(var(--u)*1.5)}
+
 /* ---------- KEYFRAMES ---------- */
 @keyframes slide{to{background-position:200% 0}}
 @keyframes blink{50%{opacity:.25}}
@@ -183,6 +204,13 @@ html,body{width:100%;height:100%;background:transparent;overflow:hidden;color:#f
   var cur = null, pd = null, bigTimer = null, cardTimer = null, boardOpen = false, cardKey = null;
   var lastBalls = '', lastBoard = '', lastCard = '', prevBat = [null, null, null];
   var debug = location.search.indexOf('debug') >= 0;
+  /* ---- layout tuning (units of u, about 1% of the screen width in portrait / height in landscape) ---- */
+  var GAP_PORTRAIT = 0;       // distance of the score bar from the bottom edge in portrait (0 = touching the bottom, negative = lower)
+  var GAP_LANDSCAPE = 0.3;    // same in landscape
+  var SHIFT_X_PORTRAIT = 0;   // move the bar right (+) or left (-) in portrait
+  var SHIFT_X_LANDSCAPE = 0;  // move the bar right (+) or left (-) in landscape
+  function qp(name){ var m = location.search.match(new RegExp('[?&]' + name + '=(-?[0-9.]+|[a-z]+)')); return m ? m[1] : null; }
+  function qn(name, fallback){ var v = parseFloat(qp(name)); return isNaN(v) ? fallback : v; }
   function $(i){ return document.getElementById(i); }
   function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
   function anim(el, cls){ if (!el) return; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
@@ -196,9 +224,14 @@ html,body{width:100%;height:100%;background:transparent;overflow:hidden;color:#f
     if (h < w * 0.3) h = Math.max((screen && screen.height) || 0, Math.round(w * 16 / 9));
     var st = $('stage'); st.style.width = w + 'px'; st.style.height = h + 'px';
     document.documentElement.style.setProperty('--u', Math.min(w / 100, h * 1.15 / 100) + 'px');
-    var gm = location.search.match(/gap=([0-9.]+)/);
-    if (gm) document.documentElement.style.setProperty('--g', 'calc(var(--u)*' + gm[1] + ')');
-    if (debug){ var d = $('dbg'); d.style.display = 'block'; d.textContent = w + 'x' + h + ' u=' + Math.min(w / 100, h * 1.15 / 100).toFixed(2); }
+    var o = qp('o'), land = o ? o === 'landscape' : w > h;
+    document.body.classList.toggle('land', land);
+    var gap = qn('gap', land ? GAP_LANDSCAPE : GAP_PORTRAIT);
+    var sx = qn('shift', land ? SHIFT_X_LANDSCAPE : SHIFT_X_PORTRAIT);
+    var root = document.documentElement.style;
+    root.setProperty('--g', 'calc(var(--u)*' + gap + ')');
+    root.setProperty('--sx', 'calc(var(--u)*' + sx + ')');
+    if (debug){ $('stage').style.boxShadow = 'inset 0 0 0 4px red'; var d = $('dbg'); d.style.display = 'block'; d.textContent = w + 'x' + h + ' u=' + Math.min(w / 100, h * 1.15 / 100).toFixed(2) + (land ? ' LAND' : ' PORT') + ' gap=' + gap + ' shift=' + sx; }
   }
   fit(); window.addEventListener('resize', fit); setTimeout(fit, 300); setTimeout(fit, 1500);
 
