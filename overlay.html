@@ -2,16 +2,17 @@
 <html>
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <style>
 :root{--u:min(1vw,1.15vh);--c1:#00d2ff;--c2:#00ff88;--hot:#ff3b5c;--gold:#ffc83d;--vio:#8a2be2}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{width:100%;height:100%;background:transparent;overflow:hidden;color:#fff;
   font-family:-apple-system,"SF Pro Display",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+#stage{position:fixed;left:0;top:0;width:100%;height:100%;overflow:hidden}
+#dbg{position:absolute;left:4px;top:40%;font:12px monospace;color:#0f0;background:rgba(0,0,0,.6);padding:2px 6px;display:none;z-index:99}
 
-/* ---------- TOP STRIP ---------- */
-#top{position:absolute;top:calc(var(--u)*3);left:calc(var(--u)*3);right:calc(var(--u)*3);
-  display:flex;align-items:center;gap:calc(var(--u)*2)}
+/* ---------- TOP ---------- */
+#top{position:absolute;top:calc(var(--u)*3);left:calc(var(--u)*3);right:calc(var(--u)*3);display:flex;align-items:center;gap:calc(var(--u)*2)}
 #live{display:none;align-items:center;gap:calc(var(--u)*1.2);padding:calc(var(--u)*1) calc(var(--u)*2.4);
   border-radius:999px;font-weight:900;letter-spacing:.12em;font-size:calc(var(--u)*3);
   background:linear-gradient(135deg,#ff2d55,#b00020);box-shadow:0 0 calc(var(--u)*4) rgba(255,45,85,.7)}
@@ -23,56 +24,69 @@ html,body{width:100%;height:100%;background:transparent;overflow:hidden;color:#f
   text-shadow:0 0 calc(var(--u)*2) rgba(0,210,255,.8)}
 #title:empty{display:none}
 
-/* ---------- MESSAGE TICKER ---------- */
-#msg{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(var(--u)*30);max-width:92%;
+/* ---------- MESSAGE ---------- */
+#msg{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(var(--u)*29);max-width:92%;
   padding:calc(var(--u)*1.2) calc(var(--u)*3.2);border-radius:999px;font-weight:800;
   font-size:calc(var(--u)*3.2);color:#1a1200;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   background:linear-gradient(90deg,#ffd75e,#ffb020,#ffd75e);background-size:200% 100%;
   box-shadow:0 0 calc(var(--u)*4) rgba(255,176,32,.6);animation:slide 4s linear infinite;display:none}
 #msg.on{display:block}
 
-/* ---------- SCORE BAR ---------- */
-#bar{position:absolute;left:calc(var(--u)*3);right:calc(var(--u)*3);bottom:calc(var(--u)*4);
-  display:grid;grid-template-columns:1.3fr 1.05fr .95fr;align-items:center;gap:calc(var(--u)*1.5);
+/* ---------- SCORE BAR (always bottom) ---------- */
+#dock{position:absolute;left:calc(var(--u)*3);right:calc(var(--u)*3);bottom:calc(var(--u)*4);animation:rise .8s cubic-bezier(.2,.9,.3,1.2) both}
+#bar{position:relative;display:grid;grid-template-columns:1.3fr 1.05fr .95fr;align-items:center;gap:calc(var(--u)*1.5);
   padding:calc(var(--u)*2.4) calc(var(--u)*2.4) calc(var(--u)*2);border-radius:calc(var(--u)*4);
   background:linear-gradient(135deg,rgba(6,10,26,.93),rgba(24,10,54,.93));
   border:calc(var(--u)*.3) solid rgba(0,210,255,.5);
-  box-shadow:0 0 calc(var(--u)*5) rgba(0,210,255,.35),0 calc(var(--u)*1) calc(var(--u)*4) rgba(0,0,0,.6);
-  overflow:hidden;animation:rise .8s cubic-bezier(.2,.9,.3,1.2) both}
+  box-shadow:0 0 calc(var(--u)*5) rgba(0,210,255,.35),0 calc(var(--u)*1) calc(var(--u)*4) rgba(0,0,0,.6);overflow:hidden}
 #bar:before{content:"";position:absolute;left:0;right:0;top:0;height:calc(var(--u)*.8);
   background:linear-gradient(90deg,var(--c1),var(--vio),var(--c2),var(--c1));background-size:300% 100%;animation:slide 3s linear infinite}
+#bar:after{content:"";position:absolute;top:0;bottom:0;left:-40%;width:30%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.35),transparent);transform:skewX(-20deg);opacity:0}
+#bar.surge{animation:surge 1s ease-out}
+#bar.surge:after{animation:sweep .9s ease-out}
+#bar.shake{animation:shake .8s ease-out}
 .col{min-width:0}
 .bat{display:flex;align-items:center;gap:calc(var(--u)*.8);padding:calc(var(--u)*.6) calc(var(--u)*1);
-  border-radius:calc(var(--u)*1.2);font-size:calc(var(--u)*3);white-space:nowrap}
+  border-radius:calc(var(--u)*1.2);font-size:calc(var(--u)*3);white-space:nowrap;transition:background .4s}
 .bat.strike{background:linear-gradient(90deg,rgba(0,210,255,.28),rgba(0,210,255,0))}
-.bat .dot{width:calc(var(--u)*1.4);color:var(--c1);font-size:calc(var(--u)*2)}
+.bat .dot{width:calc(var(--u)*1.6);color:var(--c1);font-size:calc(var(--u)*2)}
 .bat .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;font-weight:700}
-.bat .rn{font-weight:900;color:var(--c1);font-size:calc(var(--u)*3.6)}
+.bat .rn{display:inline-block;font-weight:900;color:var(--c1);font-size:calc(var(--u)*3.6)}
 .bat .bl{color:#9aa6bd;font-size:calc(var(--u)*2.4)}
 .mid{text-align:center}
 .score{display:flex;align-items:center;justify-content:center;gap:calc(var(--u)*2)}
 .tm{font-weight:900;font-size:calc(var(--u)*4.2);color:var(--c1);letter-spacing:.06em;text-shadow:0 0 calc(var(--u)*2) rgba(0,210,255,.8)}
 .sep{width:calc(var(--u)*.3);height:calc(var(--u)*5);background:linear-gradient(var(--c1),var(--vio));border-radius:2px}
-.sc{font-weight:900;font-size:calc(var(--u)*6.6);line-height:1;text-shadow:0 calc(var(--u)*.4) calc(var(--u)*2) rgba(0,0,0,.6)}
+.sc{display:inline-block;font-weight:900;font-size:calc(var(--u)*6.6);line-height:1;text-shadow:0 calc(var(--u)*.4) calc(var(--u)*2) rgba(0,0,0,.6)}
 .rates{display:flex;justify-content:center;gap:calc(var(--u)*3);margin-top:calc(var(--u)*1.2);font-size:calc(var(--u)*2.8);font-weight:800}
+.rates span{display:inline-block}
 .rates span b{color:#9aa6bd;font-size:calc(var(--u)*2.3);margin-right:calc(var(--u)*.8);letter-spacing:.08em}
 .rates .crr{color:var(--c1)} .rates .rrr{color:#ff7a3d}
-.bowl .bn{font-weight:800;font-size:calc(var(--u)*3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
 .bowl .lbl{font-size:calc(var(--u)*2.1);color:#9aa6bd;text-align:right;letter-spacing:.14em;font-weight:700}
-.balls{display:flex;justify-content:flex-end;gap:calc(var(--u)*.8);margin-top:calc(var(--u)*1);flex-wrap:nowrap}
+.bowl .bn{font-weight:800;font-size:calc(var(--u)*3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
+.bowl .bf{display:block;text-align:right;color:#ffb27a;font-weight:800;font-size:calc(var(--u)*2.5);margin-top:calc(var(--u)*.2)}
+.balls{display:flex;justify-content:flex-end;gap:calc(var(--u)*.8);margin-top:calc(var(--u)*1);flex-wrap:nowrap;min-height:calc(var(--u)*4.4)}
 .b{font-style:normal;width:calc(var(--u)*4.4);height:calc(var(--u)*4.4);border-radius:50%;display:flex;
   align-items:center;justify-content:center;font-weight:900;font-size:calc(var(--u)*2.5);
-  background:rgba(255,255,255,.12);border:calc(var(--u)*.2) solid rgba(255,255,255,.3);animation:pop .4s ease both}
+  background:rgba(255,255,255,.12);border:calc(var(--u)*.2) solid rgba(255,255,255,.3)}
 .b.f{background:var(--c1);color:#00212b;border-color:#7eeaff;box-shadow:0 0 calc(var(--u)*2) var(--c1)}
 .b.s{background:var(--c2);color:#00301b;border-color:#9dffc8;box-shadow:0 0 calc(var(--u)*2) var(--c2)}
 .b.w{background:var(--hot);color:#fff;border-color:#ff93a6;box-shadow:0 0 calc(var(--u)*2) var(--hot)}
-.tgt{display:inline-flex;gap:calc(var(--u)*1);align-items:center;margin-top:calc(var(--u)*1);float:right;
+.b.new{animation:newball .9s cubic-bezier(.2,1.6,.3,1)}
+.tgt{display:none;gap:calc(var(--u)*1);align-items:center;margin-top:calc(var(--u)*1);float:right;
   padding:calc(var(--u)*.6) calc(var(--u)*1.6);border-radius:999px;background:rgba(0,210,255,.16);
   border:calc(var(--u)*.2) solid rgba(0,210,255,.4);font-size:calc(var(--u)*2.4);font-weight:800}
-.tgt b{color:var(--c1)}
-.bump{animation:bump .5s ease}
+.tgt.on{display:inline-flex}.tgt b{color:var(--c1)}
 
-/* ---------- BIG RUN ---------- */
+/* change animations */
+.hit{animation:hit .8s cubic-bezier(.2,1.4,.3,1)}
+.zoom{animation:zoom 1s cubic-bezier(.2,1.4,.3,1)}
+.bump{animation:bump .6s ease}
+.fl{position:absolute;bottom:calc(var(--u)*27);font-weight:900;font-size:calc(var(--u)*6);white-space:nowrap;
+  text-shadow:0 0 calc(var(--u)*2.5) currentColor,0 calc(var(--u)*.4) calc(var(--u)*1) rgba(0,0,0,.8);
+  animation:floatup 1.5s ease-out forwards;pointer-events:none}
+
+/* ---------- BIG CELEBRATION ---------- */
 #flash{position:absolute;inset:0;opacity:0;pointer-events:none}
 #flash.go{animation:flash 1.1s ease-out}
 #big{position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;pointer-events:none}
@@ -86,6 +100,29 @@ html,body{width:100%;height:100%;background:transparent;overflow:hidden;color:#f
 .ring{position:absolute;left:50%;top:50%;width:calc(var(--u)*30);height:calc(var(--u)*30);margin:calc(var(--u)*-15) 0 0 calc(var(--u)*-15);
   border-radius:50%;border:calc(var(--u)*.7) solid var(--bc,#00d2ff);opacity:0;animation:ring 1.6s ease-out infinite}
 .pt{position:absolute;left:50%;top:50%;font-size:calc(var(--u)*6);opacity:0;animation:burst 1.5s ease-out forwards}
+
+/* ---------- PLAYER / BOWLER CARD ---------- */
+#card{position:absolute;left:50%;bottom:calc(var(--u)*29);width:calc(var(--u)*92);max-width:94%;
+  border-radius:calc(var(--u)*4);padding:calc(var(--u)*3);
+  background:linear-gradient(150deg,rgba(4,8,22,.96),rgba(30,10,60,.96));
+  border:calc(var(--u)*.3) solid rgba(0,210,255,.55);box-shadow:0 0 calc(var(--u)*7) rgba(0,210,255,.45);
+  opacity:0;transform:translate(-50%,40%) scale(.85);pointer-events:none;transition:all .5s cubic-bezier(.2,1.3,.3,1);overflow:hidden}
+#card.open{opacity:1;transform:translate(-50%,0) scale(1)}
+#card:before{content:"";position:absolute;left:0;right:0;top:0;height:calc(var(--u)*.9);
+  background:linear-gradient(90deg,var(--c1),var(--vio),var(--c2),var(--c1));background-size:300% 100%;animation:slide 3s linear infinite}
+.ch{display:flex;align-items:center;gap:calc(var(--u)*2.4);padding-bottom:calc(var(--u)*2);margin-bottom:calc(var(--u)*2);border-bottom:calc(var(--u)*.2) solid rgba(255,255,255,.12)}
+.ci{width:calc(var(--u)*10);height:calc(var(--u)*10);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:calc(var(--u)*5.5);
+  background:rgba(0,210,255,.18);border:calc(var(--u)*.3) solid rgba(0,210,255,.6);box-shadow:0 0 calc(var(--u)*3) rgba(0,210,255,.6)}
+.cn{flex:1;min-width:0}
+.cname{font-weight:900;font-size:calc(var(--u)*5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.crole{color:var(--c1);font-weight:800;font-size:calc(var(--u)*2.6);letter-spacing:.2em}
+.cbadge{padding:calc(var(--u)*.8) calc(var(--u)*2);border-radius:999px;font-weight:900;font-size:calc(var(--u)*2.3);letter-spacing:.1em;
+  color:#00301b;background:linear-gradient(90deg,#00ff88,#00d2ff);animation:blink 1.2s infinite}
+.sg{display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*1.6)}
+.sb{text-align:center;padding:calc(var(--u)*1.8) calc(var(--u)*.6);border-radius:calc(var(--u)*2);background:rgba(255,255,255,.06);
+  border:calc(var(--u)*.25) solid var(--c,#00d2ff)}
+.sb b{display:block;font-weight:900;font-size:calc(var(--u)*6);color:var(--c,#00d2ff);text-shadow:0 0 calc(var(--u)*2) var(--c,#00d2ff)}
+.sb span{display:block;color:#9aa6bd;font-weight:800;font-size:calc(var(--u)*2.3);letter-spacing:.14em;margin-top:calc(var(--u)*.4)}
 
 /* ---------- FULL SCOREBOARD ---------- */
 #board{position:absolute;z-index:5;inset:calc(var(--u)*10) calc(var(--u)*4) calc(var(--u)*30);border-radius:calc(var(--u)*4);
@@ -107,14 +144,19 @@ html,body{width:100%;height:100%;background:transparent;overflow:hidden;color:#f
 .ov .o{width:calc(var(--u)*9);color:#9aa6bd;font-weight:700}.ov .bw{width:calc(var(--u)*16);color:#cbd5e8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ov .bs{flex:1;display:flex;gap:calc(var(--u)*.7);flex-wrap:wrap}.ov .bs .b{width:calc(var(--u)*4);height:calc(var(--u)*4);font-size:calc(var(--u)*2.2)}
 .ov .r{color:var(--c2);font-weight:900}
-@media (orientation:landscape){#board{inset:calc(var(--u)*9) 18% calc(var(--u)*22);overflow:auto}}
 
-/* ---------- ANIMATIONS ---------- */
+/* ---------- KEYFRAMES ---------- */
 @keyframes slide{to{background-position:200% 0}}
 @keyframes blink{50%{opacity:.25}}
 @keyframes rise{from{transform:translateY(120%);opacity:0}}
-@keyframes pop{from{transform:scale(0)}}
-@keyframes bump{40%{transform:scale(1.25);color:#fff}}
+@keyframes newball{0%{transform:scale(0) rotate(-200deg)}55%{transform:scale(1.7) rotate(10deg);box-shadow:0 0 calc(var(--u)*4) #fff}100%{transform:scale(1) rotate(0)}}
+@keyframes hit{0%{transform:scale(1)}30%{transform:scale(1.9);color:#fff;text-shadow:0 0 calc(var(--u)*3) #00d2ff,0 0 calc(var(--u)*6) #00d2ff}100%{transform:scale(1)}}
+@keyframes zoom{0%{transform:scale(1)}25%{transform:scale(1.55) rotate(-3deg);color:#ffd75e;text-shadow:0 0 calc(var(--u)*4) #ffb020,0 0 calc(var(--u)*8) #ffb020}60%{transform:scale(.95)}100%{transform:scale(1)}}
+@keyframes bump{40%{transform:scale(1.4);color:#fff;text-shadow:0 0 calc(var(--u)*2) #fff}}
+@keyframes surge{0%{box-shadow:0 0 calc(var(--u)*5) rgba(0,210,255,.35)}25%{box-shadow:0 0 calc(var(--u)*12) #ffc83d,0 0 calc(var(--u)*20) rgba(255,200,61,.7);border-color:#ffc83d}100%{box-shadow:0 0 calc(var(--u)*5) rgba(0,210,255,.35)}}
+@keyframes shake{0%,100%{transform:none}10%{transform:translateX(-3%)}20%{transform:translateX(3%)}30%{transform:translateX(-2.5%)}40%{transform:translateX(2.5%)}55%{transform:translateX(-1.5%)}70%{transform:translateX(1%)}0%{box-shadow:0 0 calc(var(--u)*14) #ff3b5c;border-color:#ff3b5c}50%{box-shadow:0 0 calc(var(--u)*14) #ff3b5c;border-color:#ff3b5c}}
+@keyframes sweep{0%{left:-40%;opacity:1}100%{left:120%;opacity:0}}
+@keyframes floatup{0%{opacity:0;transform:translate(-50%,0) scale(.4)}18%{opacity:1;transform:translate(-50%,calc(var(--u)*-2)) scale(1.35)}100%{opacity:0;transform:translate(-50%,calc(var(--u)*-16)) scale(1)}}
 @keyframes flash{0%{opacity:.85}100%{opacity:0}}
 @keyframes bigpop{0%{transform:scale(.1) rotate(-20deg);opacity:0}18%{transform:scale(1.12) rotate(3deg);opacity:1}28%{transform:scale(1) rotate(0)}82%{transform:scale(1);opacity:1}100%{transform:scale(1.8);opacity:0}}
 @keyframes ring{0%{transform:scale(.3);opacity:.9}100%{transform:scale(3.2);opacity:0}}
@@ -122,47 +164,78 @@ html,body{width:100%;height:100%;background:transparent;overflow:hidden;color:#f
 </style>
 </head>
 <body>
-<div id="flash"></div>
-<div id="top"><div id="live"><i></i>LIVE</div><div id="title"></div></div>
-<div id="msg"></div>
-<div id="bar">
-  <div class="col" id="bats"></div>
-  <div class="col mid">
-    <div class="score"><span class="tm" id="tm">TEA</span><span class="sep"></span><span class="sc" id="sc">0/0</span></div>
-    <div class="rates" id="rates"></div>
+<div id="stage">
+  <div id="flash"></div>
+  <div id="top"><div id="live"><i></i>LIVE</div><div id="title"></div></div>
+  <div id="msg"></div>
+  <div id="dock">
+    <div id="bar">
+      <div class="col">
+        <div class="bat" id="r1"><span class="dot" id="d1"></span><span class="nm" id="n1">-</span><span class="rn" id="u1">0</span><span class="bl" id="l1">(0)</span></div>
+        <div class="bat" id="r2"><span class="dot" id="d2"></span><span class="nm" id="n2">-</span><span class="rn" id="u2">0</span><span class="bl" id="l2">(0)</span></div>
+      </div>
+      <div class="col mid">
+        <div class="score"><span class="tm" id="tm">TEA</span><span class="sep"></span><span class="sc" id="sc">0/0</span></div>
+        <div class="rates"><span class="crr" id="crrw"><b>CRR</b><em id="crr" style="font-style:normal">0.00</em></span><span class="rrr" id="rrrw" style="display:none"><b>RRR</b><em id="rrr" style="font-style:normal">0.00</em></span></div>
+      </div>
+      <div class="col bowl">
+        <div class="lbl">BOWLING</div>
+        <div class="bn" id="bn">Bowler</div>
+        <span class="bf" id="bf">0-0 (0)</span>
+        <div class="balls" id="balls"></div>
+        <div class="tgt" id="tgt"><span id="tgtn"></span> <b id="tgts"></b></div>
+      </div>
+    </div>
   </div>
-  <div class="col bowl" id="bowl"></div>
+  <div id="card"></div>
+  <div id="big"><div id="bigbox"><div class="ring"></div><div id="bigt"></div><div id="bigl"></div></div></div>
+  <div id="board"></div>
+  <div id="dbg"></div>
 </div>
-<div id="big"><div id="bigbox"><div class="ring"></div><div id="bigt"></div><div id="bigl"></div></div></div>
-<div id="board"></div>
 <script>
 (function(){
-  var prev = null, boardOpen = false, bigTimer = null;
+  var cur = null, pd = null, bigTimer = null, cardTimer = null, boardOpen = false, cardKey = null;
+  var lastBalls = '', lastBoard = '', lastCard = '', prevBat = [null, null, null];
+  var debug = location.search.indexOf('debug') >= 0;
   function $(i){ return document.getElementById(i); }
   function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
-  function ball(r){ var c = r === 'W' ? 'w' : r === '6' ? 's' : r === '4' ? 'f' : ''; return '<i class="b ' + c + '">' + esc(r) + '</i>'; }
-  function setText(id, v){
-    var el = $(id); v = String(v);
-    if (el.textContent !== v){
-      el.textContent = v; el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump');
-    }
-  }
-  function batRow(b){
-    b = b || {};
-    return '<div class="bat' + (b.onStrike ? ' strike' : '') + '"><span class="dot">' + (b.onStrike ? '\u25CF' : '\u25CB') +
-      '</span><span class="nm">' + esc(b.name || '-') + '</span><span class="rn">' + esc(b.run || 0) +
-      '</span><span class="bl">(' + esc(b.ball || 0) + ')</span></div>';
-  }
-  var COL = { '4': '#00d2ff', '6': '#00ff88', 'W': '#ff3b5c' };
-  var LBL = { '4': 'FOUR!', '6': 'SIX!', 'W': 'WICKET!' };
+  function anim(el, cls){ if (!el) return; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
+  function setT(el, v, cls){ v = String(v); if (el.textContent !== v){ el.textContent = v; if (cls) anim(el, cls); return true; } return false; }
+  function num(v){ var n = parseFloat(v); return isNaN(n) ? 0 : n; }
 
+  /* ---- always measure the real viewport so the bar stays at the bottom ---- */
+  function fit(){
+    var w = window.innerWidth || document.documentElement.clientWidth || (screen && screen.width) || 360;
+    var h = window.innerHeight || document.documentElement.clientHeight || 0;
+    if (h < w * 0.3) h = Math.max((screen && screen.height) || 0, Math.round(w * 16 / 9));
+    var st = $('stage'); st.style.width = w + 'px'; st.style.height = h + 'px';
+    document.documentElement.style.setProperty('--u', Math.min(w / 100, h * 1.15 / 100) + 'px');
+    if (debug){ var d = $('dbg'); d.style.display = 'block'; d.textContent = w + 'x' + h + ' u=' + Math.min(w / 100, h * 1.15 / 100).toFixed(2); }
+  }
+  fit(); window.addEventListener('resize', fit); setTimeout(fit, 300); setTimeout(fit, 1500);
+
+  function ballHtml(r, isNew){
+    var c = r === 'W' ? 'w' : r === '6' ? 's' : r === '4' ? 'f' : '';
+    return '<i class="b ' + c + (isNew ? ' new' : '') + '">' + esc(r) + '</i>';
+  }
+  function floatText(text, color, xPct){
+    var f = document.createElement('div'); f.className = 'fl'; f.textContent = text;
+    f.style.color = color; f.style.left = xPct + '%';
+    $('stage').appendChild(f); setTimeout(function(){ if (f.parentNode) f.parentNode.removeChild(f); }, 1600);
+  }
+
+  var COL = { '4': '#00d2ff', '6': '#00ff88', 'W': '#ff3b5c' };
+  var LBL = { '4': 'FOUR!', '6': 'SIX!', 'W': 'WICKET!', '0': 'DOT BALL' };
   function showBig(r){
-    var big = $('big'), box = $('bigbox'), c = COL[r];
+    r = String(r);
+    var big = $('big'), box = $('bigbox'), c = COL[r] || '#ffd75e';
+    var label = LBL[r] || ((r.length === 1 && r >= '1' && r <= '9') ? (r + (r === '1' ? ' RUN' : ' RUNS')) : 'EXTRA');
     box.style.setProperty('--bc', c);
     $('bigt').textContent = r;
-    $('bigl').textContent = LBL[r];
+    $('bigt').style.fontSize = r.length > 2 ? 'calc(var(--u)*14)' : '';
+    $('bigl').textContent = label;
     var old = box.querySelectorAll('.pt'); for (var i = 0; i < old.length; i++) box.removeChild(old[i]);
-    var sym = ['\u2605', '\uD83D\uDD25', '\u2726'];
+    var sym = ['★', '🔥', '✦'];
     for (var k = 0; k < 16; k++){
       var p = document.createElement('span'), a = k / 16 * Math.PI * 2, d = 38 + Math.random() * 30;
       p.className = 'pt'; p.textContent = sym[k % 3];
@@ -172,58 +245,141 @@ html,body{width:100%;height:100%;background:transparent;overflow:hidden;color:#f
       box.appendChild(p);
     }
     var fl = $('flash'); fl.style.background = 'radial-gradient(circle,' + c + '66,transparent 70%)';
-    fl.classList.remove('go'); void fl.offsetWidth; fl.classList.add('go');
+    anim(fl, 'go');
     big.classList.remove('show'); void big.offsetWidth; big.classList.add('show');
     box.style.animation = 'none'; void box.offsetWidth; box.style.animation = '';
     clearTimeout(bigTimer); bigTimer = setTimeout(function(){ big.classList.remove('show'); }, 2700);
   }
 
+  /* ---- cards ---- */
+  function sb(val, label, color){ return '<div class="sb" style="--c:' + color + '"><b>' + esc(val) + '</b><span>' + label + '</span></div>'; }
+  function cardHtml(key){
+    var d = cur || {};
+    if (key === 'bowl'){
+      var w = d.bowler || {}, ov = num(w.overs), balls = Math.floor(ov) * 6 + Math.round((ov % 1) * 10);
+      var eco = w.economy != null ? w.economy : (balls > 0 ? (num(w.runs) / (balls / 6)).toFixed(2) : '0.00');
+      return '<div class="ch"><div class="ci">🏏</div><div class="cn"><div class="cname">' + esc(w.name || 'Bowler') + '</div><div class="crole">BOWLER</div></div></div>' +
+        '<div class="sg">' + sb(w.overs || 0, 'OVERS', '#00d2ff') + sb(w.runs || 0, 'RUNS', '#ffc83d') + sb(w.wickets || 0, 'WICKETS', '#ff3b5c') +
+        sb(eco, 'ECONOMY', '#00ff88') + sb((d.currentRunStack || []).length, 'THIS OVER', '#8a7bff') + sb(d.extra && d.extra.total != null ? d.extra.total : 0, 'EXTRAS', '#ff7a3d') + '</div>';
+    }
+    var b = d[key === 'b2' ? 'batter2' : 'batter1'] || {};
+    return '<div class="ch"><div class="ci">👤</div><div class="cn"><div class="cname">' + esc(b.name || 'Batter') + '</div><div class="crole">BATTER</div></div>' +
+      (b.onStrike ? '<div class="cbadge">ON STRIKE</div>' : '') + '</div>' +
+      '<div class="sg">' + sb(b.run || 0, 'RUNS', '#00d2ff') + sb(b.ball || 0, 'BALLS', '#ffffff') + sb(b.strikeRate || '0.00', 'STRIKE RATE', '#ffc83d') +
+      sb(b.four || 0, 'FOURS', '#00ff88') + sb(b.six || 0, 'SIXES', '#ff7a3d') + sb(b.onStrike ? 'Striker' : 'Not Out', 'STATUS', '#8a7bff') + '</div>';
+  }
+  function hideCards(){ cardKey = null; clearTimeout(cardTimer); $('card').classList.remove('open'); }
+  function showCard(key){
+    if (!cur) return;
+    var el = $('card');
+    if (cardKey === key && el.classList.contains('open')){ hideCards(); return; }
+    cardKey = key; lastCard = cardHtml(key); el.innerHTML = lastCard;
+    if (boardOpen) window.toggleBoard(false);
+    el.classList.remove('open'); void el.offsetWidth; el.classList.add('open');
+    clearTimeout(cardTimer); cardTimer = setTimeout(hideCards, 7000);
+  }
+
   function renderBoard(d){
     var inn2 = !!d.team2score;
     var team = inn2 ? d.team2 : d.team1, score = inn2 ? d.team2score : d.team1score;
-    function line(b){ b = b || {}; return '<div class="row"><span class="n">' + (b.onStrike ? '\u26A1 ' : '') + esc(b.name || '-') +
+    function line(b){ b = b || {}; return '<div class="row"><span class="n">' + (b.onStrike ? '⚡ ' : '') + esc(b.name || '-') +
       '</span><span class="s">' + esc(b.run || 0) + ' (' + esc(b.ball || 0) + ')</span><span class="x">SR ' + esc(b.strikeRate || '0.00') +
-      ' \u2022 4s ' + esc(b.four || 0) + ' \u2022 6s ' + esc(b.six || 0) + '</span></div>'; }
+      ' • 4s ' + esc(b.four || 0) + ' • 6s ' + esc(b.six || 0) + '</span></div>'; }
     var ov = (d.recentOvers || []).map(function(o){
       return '<div class="ov"><span class="o">Over ' + esc(o.overNo) + '</span><span class="bw">' + esc(o.bowler || '-') +
-        '</span><span class="bs">' + (o.stack || []).map(ball).join('') + '</span><span class="r">' + esc(o.runs || 0) + '</span></div>';
+        '</span><span class="bs">' + (o.stack || []).map(function(x){ return ballHtml(x, false); }).join('') + '</span><span class="r">' + esc(o.runs || 0) + '</span></div>';
     }).join('');
-    $('board').innerHTML = '<div id="bt">' + esc(d.matchs || 'Live Match') + '</div><div id="bm">' + esc(d.winningMessage || '') + '</div>' +
+    var html = '<div id="bt">' + esc(d.matchs || 'Live Match') + '</div><div id="bm">' + esc(d.winningMessage || '') + '</div>' +
       '<div class="card"><div class="h"><b>' + esc(team) + '</b><span>' + esc(score) + '</span></div>' + line(d.batter1) + line(d.batter2) + '</div>' +
       '<div class="card"><div class="h"><b style="font-size:calc(var(--u)*3.2);color:#9aa6bd">RECENT OVERS</b></div>' + (ov || '<div class="row"><span class="x">No overs yet</span></div>') + '</div>';
+    if (html !== lastBoard){ lastBoard = html; $('board').innerHTML = html; }
   }
 
+  /* ---- main update: only touches what actually changed ---- */
   window.updateScore = function(d){
     if (!d) return;
+    cur = d;
     var inn2 = !!d.team2score || d.inningNo === 2;
     var team = d.team2score ? d.team2 : d.team1;
     var score = d.team2score || d.team1score || '0/0';
     var stack = d.currentRunStack || [];
     var last = stack.length ? stack[stack.length - 1] : null;
+    var parts = String(score).split('/');
+    var runs = parseInt(parts[0], 10) || 0, wk = parseInt(parts[1], 10) || 0;
+    var teamKey = String(team || '') + '|' + (d.inningNo || '');
+    var bw = d.bowler || {};
 
-    $('title').textContent = d.matchs || '';
-    $('bats').innerHTML = batRow(d.batter1) + batRow(d.batter2);
+    setT($('title'), d.matchs || '');
+
+    // batters
+    var xs = [0, 14, 14];
+    for (var i = 1; i <= 2; i++){
+      var b = d['batter' + i] || {};
+      $('r' + i).classList.toggle('strike', !!b.onStrike);
+      $('d' + i).textContent = b.onStrike ? '●' : '○';
+      $('n' + i).textContent = b.name || '-';
+      var nr = parseInt(b.run, 10) || 0, pb = prevBat[i];
+      if (pb && pb.name === b.name && nr > pb.run){
+        anim($('u' + i), 'hit'); floatText('+' + (nr - pb.run), '#00d2ff', xs[i]);
+      }
+      $('u' + i).textContent = nr;
+      $('l' + i).textContent = '(' + (b.ball || 0) + ')';
+      prevBat[i] = { name: b.name, run: nr };
+    }
+
+    // team score
     $('tm').textContent = String(team || 'TEAM').slice(0, 3).toUpperCase();
-    setText('sc', score);
-    $('rates').innerHTML = inn2
-      ? '<span class="crr"><b>CRR</b>' + esc(d.crr || '0.00') + '</span><span class="rrr"><b>RRR</b>' + esc(d.rrr || '0.00') + '</span>'
-      : '<span class="crr"><b>CRR</b>' + esc(d.crr || '0.00') + '</span>';
-    $('bowl').innerHTML = '<div class="lbl">BOWLING</div><div class="bn">' + esc((d.bowler && d.bowler.name) || 'Bowler') + '</div>' +
-      '<div class="balls">' + stack.slice(-6).map(ball).join('') + '</div>' +
-      (inn2 ? '<div class="tgt">' + esc(String(d.team1 || '').slice(0, 3).toUpperCase()) + ' <b>' + esc(d.team1score || '0/0') + '</b></div>' : '');
+    if (pd && pd.teamKey === teamKey){
+      if (runs > pd.runs){
+        anim($('sc'), 'zoom'); anim($('bar'), 'surge');
+        floatText('+' + (runs - pd.runs), '#ffd75e', 50);
+      }
+      if (wk > pd.wk){ anim($('bar'), 'shake'); anim($('flash'), 'go'); $('flash').style.background = 'radial-gradient(circle,#ff3b5c88,transparent 70%)'; }
+    }
+    $('sc').textContent = score;
+    setT($('crr'), d.crr || '0.00', 'bump');
+    $('rrrw').style.display = inn2 ? '' : 'none';
+    setT($('rrr'), d.rrr || '0.00', 'bump');
+
+    // bowler
+    $('bn').textContent = bw.name || 'Bowler';
+    var bruns = parseInt(bw.runs, 10) || 0;
+    if (pd && pd.bowlName === bw.name && bruns > pd.bowlRuns) floatText('+' + (bruns - pd.bowlRuns), '#ff7a3d', 86);
+    setT($('bf'), (bw.wickets || 0) + '-' + (bw.runs || 0) + ' (' + (bw.overs || 0) + ')', 'bump');
+
+    var arr = stack.slice(-6), key = arr.join(',') + '|' + stack.length;
+    if (key !== lastBalls){
+      var grew = !!pd && stack.length > pd.len;
+      $('balls').innerHTML = arr.map(function(r, k){ return ballHtml(r, grew && k === arr.length - 1); }).join('');
+      lastBalls = key;
+    }
+
+    var tg = $('tgt'); tg.classList.toggle('on', inn2);
+    $('tgtn').textContent = String(d.team1 || '').slice(0, 3).toUpperCase(); $('tgts').textContent = d.team1score || '0/0';
 
     var m = $('msg'); m.textContent = d.winningMessage || ''; m.classList.toggle('on', !!d.winningMessage);
     renderBoard(d);
+    if (cardKey){ var h = cardHtml(cardKey); if (h !== lastCard){ lastCard = h; $('card').innerHTML = h; } }
 
-    var sig = stack.length + '|' + last + '|' + score;
-    if (prev && sig !== prev.sig && stack.length > prev.len && COL[last]) showBig(last);
-    prev = { sig: sig, len: stack.length };
+    // celebration for a new boundary / wicket
+    if (pd && stack.length > pd.len && COL[last]) showBig(last);
+
+    pd = { len: stack.length, runs: runs, wk: wk, teamKey: teamKey, bowlRuns: bruns, bowlName: bw.name };
   };
+
   window.setLive = function(on){ $('live').classList.toggle('on', !!on); };
   window.toggleBoard = function(force){
     boardOpen = typeof force === 'boolean' ? force : !boardOpen;
+    if (boardOpen) hideCards();
     $('board').classList.toggle('open', boardOpen);
   };
+  window.showPlayer = function(n){ showCard(n === 2 ? 'b2' : 'b1'); };
+  window.showBowler = function(){ showCard('bowl'); };
+  window.showLastBall = function(){
+    var s = cur && cur.currentRunStack || [];
+    if (s.length) showBig(s[s.length - 1]); else floatText('No balls yet', '#ffffff', 50);
+  };
+  window.hideCards = hideCards;
   window.__overlayReady = true;
 })();
 </script>
