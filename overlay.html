@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <style>
-:root{--u:min(1vw,1.15vh);--c1:#00d2ff;--c2:#00ff88;--hot:#ff3b5c;--gold:#ffc83d;--vio:#8a2be2}
+/* --g = gap under the score bar. Smaller = closer to the bottom (try 0.3 to 1.2). Test with overlay.html?gap=0.5 */
+:root{--u:min(1vw,1.15vh);--g:calc(var(--u)*0.8);--c1:#00d2ff;--c2:#00ff88;--hot:#ff3b5c;--gold:#ffc83d;--vio:#8a2be2}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{width:100%;height:100%;background:transparent;overflow:hidden;color:#fff;
   font-family:-apple-system,"SF Pro Display",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
@@ -18,22 +19,9 @@ html,body{width:100%;height:100%;background:transparent;overflow:hidden;color:#f
   background:linear-gradient(135deg,#ff2d55,#b00020);box-shadow:0 0 calc(var(--u)*4) rgba(255,45,85,.7)}
 #live.on{display:flex}
 #live i{width:calc(var(--u)*2);height:calc(var(--u)*2);border-radius:50%;background:#fff;animation:blink 1s infinite}
-#title{flex:1;min-width:0;text-align:center;font-weight:800;font-size:calc(var(--u)*3.1);letter-spacing:.04em;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:calc(var(--u)*1) calc(var(--u)*2.6);
-  border-radius:999px;background:rgba(6,10,24,.72);border:calc(var(--u)*.25) solid rgba(0,210,255,.35);
-  text-shadow:0 0 calc(var(--u)*2) rgba(0,210,255,.8)}
-#title:empty{display:none}
-
-/* ---------- MESSAGE ---------- */
-#msg{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(var(--u)*29);max-width:92%;
-  padding:calc(var(--u)*1.2) calc(var(--u)*3.2);border-radius:999px;font-weight:800;
-  font-size:calc(var(--u)*3.2);color:#1a1200;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  background:linear-gradient(90deg,#ffd75e,#ffb020,#ffd75e);background-size:200% 100%;
-  box-shadow:0 0 calc(var(--u)*4) rgba(255,176,32,.6);animation:slide 4s linear infinite;display:none}
-#msg.on{display:block}
 
 /* ---------- SCORE BAR (always bottom) ---------- */
-#dock{position:absolute;left:calc(var(--u)*3);right:calc(var(--u)*3);bottom:calc(var(--u)*4);animation:rise .8s cubic-bezier(.2,.9,.3,1.2) both}
+#dock{position:absolute;left:calc(var(--u)*3);right:calc(var(--u)*3);bottom:var(--g);animation:rise .8s cubic-bezier(.2,.9,.3,1.2) both}
 #bar{position:relative;display:grid;grid-template-columns:1.3fr 1.05fr .95fr;align-items:center;gap:calc(var(--u)*1.5);
   padding:calc(var(--u)*2.4) calc(var(--u)*2.4) calc(var(--u)*2);border-radius:calc(var(--u)*4);
   background:linear-gradient(135deg,rgba(6,10,26,.93),rgba(24,10,54,.93));
@@ -82,7 +70,7 @@ html,body{width:100%;height:100%;background:transparent;overflow:hidden;color:#f
 .hit{animation:hit .8s cubic-bezier(.2,1.4,.3,1)}
 .zoom{animation:zoom 1s cubic-bezier(.2,1.4,.3,1)}
 .bump{animation:bump .6s ease}
-.fl{position:absolute;bottom:calc(var(--u)*27);font-weight:900;font-size:calc(var(--u)*6);white-space:nowrap;
+.fl{position:absolute;bottom:calc(var(--g) + var(--u)*23);font-weight:900;font-size:calc(var(--u)*6);white-space:nowrap;
   text-shadow:0 0 calc(var(--u)*2.5) currentColor,0 calc(var(--u)*.4) calc(var(--u)*1) rgba(0,0,0,.8);
   animation:floatup 1.5s ease-out forwards;pointer-events:none}
 
@@ -102,7 +90,7 @@ html,body{width:100%;height:100%;background:transparent;overflow:hidden;color:#f
 .pt{position:absolute;left:50%;top:50%;font-size:calc(var(--u)*6);opacity:0;animation:burst 1.5s ease-out forwards}
 
 /* ---------- PLAYER / BOWLER CARD ---------- */
-#card{position:absolute;left:50%;bottom:calc(var(--u)*29);width:calc(var(--u)*92);max-width:94%;
+#card{position:absolute;left:50%;bottom:calc(var(--g) + var(--u)*25);width:calc(var(--u)*92);max-width:94%;
   border-radius:calc(var(--u)*4);padding:calc(var(--u)*3);
   background:linear-gradient(150deg,rgba(4,8,22,.96),rgba(30,10,60,.96));
   border:calc(var(--u)*.3) solid rgba(0,210,255,.55);box-shadow:0 0 calc(var(--u)*7) rgba(0,210,255,.45);
@@ -125,15 +113,14 @@ html,body{width:100%;height:100%;background:transparent;overflow:hidden;color:#f
 .sb span{display:block;color:#9aa6bd;font-weight:800;font-size:calc(var(--u)*2.3);letter-spacing:.14em;margin-top:calc(var(--u)*.4)}
 
 /* ---------- FULL SCOREBOARD ---------- */
-#board{position:absolute;z-index:5;inset:calc(var(--u)*10) calc(var(--u)*4) calc(var(--u)*30);border-radius:calc(var(--u)*4);
+#board{position:absolute;z-index:5;inset:calc(var(--u)*10) calc(var(--u)*4) calc(var(--g) + var(--u)*26);border-radius:calc(var(--u)*4);
   background:linear-gradient(160deg,rgba(4,8,22,.96),rgba(22,10,50,.96));border:calc(var(--u)*.3) solid rgba(0,210,255,.5);
   box-shadow:0 0 calc(var(--u)*8) rgba(0,210,255,.35);padding:calc(var(--u)*3.5);overflow:hidden;
   opacity:0;transform:translateY(8%) scale(.96);pointer-events:none;transition:all .5s cubic-bezier(.2,.9,.3,1.1)}
 #board.open{opacity:1;transform:none}
 #board:before{content:"";position:absolute;left:0;right:0;top:0;height:calc(var(--u)*.9);
   background:linear-gradient(90deg,var(--c1),var(--vio),var(--c2),var(--c1));background-size:300% 100%;animation:slide 3s linear infinite}
-#bt{text-align:center;font-weight:900;font-size:calc(var(--u)*4);color:var(--c1);text-shadow:0 0 calc(var(--u)*2) rgba(0,210,255,.7)}
-#bm{text-align:center;color:var(--c2);font-weight:700;font-size:calc(var(--u)*2.8);margin:calc(var(--u)*.8) 0 calc(var(--u)*2)}
+#bt{text-align:center;font-weight:900;font-size:calc(var(--u)*4);color:var(--c1);text-shadow:0 0 calc(var(--u)*2) rgba(0,210,255,.7);margin-bottom:calc(var(--u)*2)}
 .card{border-radius:calc(var(--u)*2.4);padding:calc(var(--u)*2.4);margin-bottom:calc(var(--u)*2);background:rgba(255,255,255,.05);border:calc(var(--u)*.2) solid rgba(255,255,255,.1)}
 .card .h{display:flex;justify-content:space-between;align-items:center;padding-bottom:calc(var(--u)*1.4);margin-bottom:calc(var(--u)*1);border-bottom:calc(var(--u)*.2) solid rgba(255,255,255,.12)}
 .card .h b{font-size:calc(var(--u)*4);font-weight:900}.card .h span{font-size:calc(var(--u)*5.4);font-weight:900;color:var(--c1)}
@@ -166,8 +153,7 @@ html,body{width:100%;height:100%;background:transparent;overflow:hidden;color:#f
 <body>
 <div id="stage">
   <div id="flash"></div>
-  <div id="top"><div id="live"><i></i>LIVE</div><div id="title"></div></div>
-  <div id="msg"></div>
+  <div id="top"><div id="live"><i></i>LIVE</div></div>
   <div id="dock">
     <div id="bar">
       <div class="col">
@@ -210,6 +196,8 @@ html,body{width:100%;height:100%;background:transparent;overflow:hidden;color:#f
     if (h < w * 0.3) h = Math.max((screen && screen.height) || 0, Math.round(w * 16 / 9));
     var st = $('stage'); st.style.width = w + 'px'; st.style.height = h + 'px';
     document.documentElement.style.setProperty('--u', Math.min(w / 100, h * 1.15 / 100) + 'px');
+    var gm = location.search.match(/gap=([0-9.]+)/);
+    if (gm) document.documentElement.style.setProperty('--g', 'calc(var(--u)*' + gm[1] + ')');
     if (debug){ var d = $('dbg'); d.style.display = 'block'; d.textContent = w + 'x' + h + ' u=' + Math.min(w / 100, h * 1.15 / 100).toFixed(2); }
   }
   fit(); window.addEventListener('resize', fit); setTimeout(fit, 300); setTimeout(fit, 1500);
@@ -289,7 +277,7 @@ html,body{width:100%;height:100%;background:transparent;overflow:hidden;color:#f
       return '<div class="ov"><span class="o">Over ' + esc(o.overNo) + '</span><span class="bw">' + esc(o.bowler || '-') +
         '</span><span class="bs">' + (o.stack || []).map(function(x){ return ballHtml(x, false); }).join('') + '</span><span class="r">' + esc(o.runs || 0) + '</span></div>';
     }).join('');
-    var html = '<div id="bt">' + esc(d.matchs || 'Live Match') + '</div><div id="bm">' + esc(d.winningMessage || '') + '</div>' +
+    var html = '<div id="bt">' + esc(d.matchs || 'Live Match') + '</div>' +
       '<div class="card"><div class="h"><b>' + esc(team) + '</b><span>' + esc(score) + '</span></div>' + line(d.batter1) + line(d.batter2) + '</div>' +
       '<div class="card"><div class="h"><b style="font-size:calc(var(--u)*3.2);color:#9aa6bd">RECENT OVERS</b></div>' + (ov || '<div class="row"><span class="x">No overs yet</span></div>') + '</div>';
     if (html !== lastBoard){ lastBoard = html; $('board').innerHTML = html; }
@@ -308,8 +296,6 @@ html,body{width:100%;height:100%;background:transparent;overflow:hidden;color:#f
     var runs = parseInt(parts[0], 10) || 0, wk = parseInt(parts[1], 10) || 0;
     var teamKey = String(team || '') + '|' + (d.inningNo || '');
     var bw = d.bowler || {};
-
-    setT($('title'), d.matchs || '');
 
     // batters
     var xs = [0, 14, 14];
@@ -357,7 +343,6 @@ html,body{width:100%;height:100%;background:transparent;overflow:hidden;color:#f
     var tg = $('tgt'); tg.classList.toggle('on', inn2);
     $('tgtn').textContent = String(d.team1 || '').slice(0, 3).toUpperCase(); $('tgts').textContent = d.team1score || '0/0';
 
-    var m = $('msg'); m.textContent = d.winningMessage || ''; m.classList.toggle('on', !!d.winningMessage);
     renderBoard(d);
     if (cardKey){ var h = cardHtml(cardKey); if (h !== lastCard){ lastCard = h; $('card').innerHTML = h; } }
 
