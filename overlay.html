@@ -133,8 +133,8 @@ html,body{width:100%;height:100%;background:transparent;overflow:hidden;color:#f
 .ov .bs{flex:1;display:flex;gap:calc(var(--u)*.7);flex-wrap:wrap}.ov .bs .b{width:calc(var(--u)*4);height:calc(var(--u)*4);font-size:calc(var(--u)*2.2)}
 .ov .r{color:var(--c2);font-weight:900}
 
-/* ---------- LANDSCAPE: score bar is 96% wide with 2% margin on each side ---------- */
-body.land #dock{left:calc(2% + var(--sx,0px));right:calc(2% - var(--sx,0px))}
+/* ---------- LANDSCAPE: score bar centered at 68% width ---------- */
+body.land #dock{left:16%;right:16%}
 body.land #bar{max-width:none}
 
 /* ---------- LANDSCAPE: compact two-column team board ---------- */
@@ -170,6 +170,7 @@ body.land .ov .bs .b{width:calc(var(--u)*2.8);height:calc(var(--u)*2.8);font-siz
 @keyframes ring{0%{transform:scale(.3);opacity:.9}100%{transform:scale(3.2);opacity:0}}
 @keyframes burst{0%{transform:translate(-50%,-50%) scale(0);opacity:1}70%{opacity:1}100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(1.3) rotate(220deg);opacity:0}}
 </style>
+<base target="_blank">
 </head>
 <body>
 <div id="stage">
@@ -205,7 +206,7 @@ body.land .ov .bs .b{width:calc(var(--u)*2.8);height:calc(var(--u)*2.8);font-siz
   var lastBalls = '', lastBoard = '', lastCard = '', prevBat = [null, null, null];
   var debug = location.search.indexOf('debug') >= 0;
   /* ---- layout tuning (units of u, about 1% of the screen width in portrait / height in landscape) ---- */
-  var GAP_PORTRAIT = 0;       // distance of the score bar from the bottom edge in portrait (0 = touching the bottom, negative = lower)
+  var GAP_PORTRAIT = 0;       // portrait: distance of score bar from bottom edge (0 = flush/bottom, negative = tucked slightly off-screen)
   var GAP_LANDSCAPE = 0.3;    // same in landscape
   var SHIFT_X_PORTRAIT = 0;   // move the bar right (+) or left (-) in portrait
   var SHIFT_X_LANDSCAPE = 0;  // move the bar right (+) or left (-) in landscape
