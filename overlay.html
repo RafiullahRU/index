@@ -135,6 +135,31 @@ html,body{width:100%;height:100%;background:transparent;overflow:hidden;color:#f
 .ov .bs{flex:1;display:flex;gap:calc(var(--u)*.7);flex-wrap:wrap}.ov .bs .b{width:calc(var(--u)*4);height:calc(var(--u)*4);font-size:calc(var(--u)*2.2)}
 .ov .r{color:var(--c2);font-weight:900}
 
+/* ---------- PORTRAIT: compact (shorter) score bar ---------- */
+body:not(.land) #bar{padding:calc(var(--u)*1.3) calc(var(--u)*2) calc(var(--u)*1.1);gap:calc(var(--u)*1);border-radius:calc(var(--u)*3)}
+body:not(.land) #bar:before{height:calc(var(--u)*.5)}
+body:not(.land) .bat{padding:calc(var(--u)*.25) calc(var(--u)*.8);font-size:calc(var(--u)*2.5)}
+body:not(.land) .bat .dot{font-size:calc(var(--u)*1.7)}
+body:not(.land) .bat .rn{font-size:calc(var(--u)*2.9)}
+body:not(.land) .bat .bl{font-size:calc(var(--u)*2)}
+body:not(.land) .tm{font-size:calc(var(--u)*3.1)}
+body:not(.land) .sep{height:calc(var(--u)*3)}
+body:not(.land) .sc{font-size:calc(var(--u)*5.2)}
+body:not(.land) .sc.sm{font-size:calc(var(--u)*4.4)}
+body:not(.land) .sc.xs{font-size:calc(var(--u)*3.7)}
+body:not(.land) .rates{margin-top:calc(var(--u)*.4);font-size:calc(var(--u)*2.4);gap:calc(var(--u)*2.4)}
+body:not(.land) .rates span b{font-size:calc(var(--u)*2)}
+body:not(.land) .bowl .lbl{font-size:calc(var(--u)*1.7)}
+body:not(.land) .bowl .bn{font-size:calc(var(--u)*2.6)}
+body:not(.land) .bowl .bf{font-size:calc(var(--u)*2.2);margin-top:0}
+body:not(.land) .balls{margin-top:calc(var(--u)*.5);min-height:calc(var(--u)*3.4);gap:calc(var(--u)*.6)}
+body:not(.land) .b{width:calc(var(--u)*3.4);height:calc(var(--u)*3.4);font-size:calc(var(--u)*2)}
+body:not(.land) .tgt{margin-top:calc(var(--u)*.5);padding:calc(var(--u)*.3) calc(var(--u)*1.3);font-size:calc(var(--u)*2)}
+/* cards / floating text sit closer to the shorter bar */
+body:not(.land) .fl{bottom:calc(var(--g) + var(--u)*17)}
+body:not(.land) #card{bottom:calc(var(--g) + var(--u)*19)}
+body:not(.land) #board{bottom:calc(var(--g) + var(--u)*20)}
+
 /* ---------- LANDSCAPE: score bar centered at 68% width ---------- */
 body.land #dock{left:16%;right:16%}
 body.land #bar{max-width:none}
@@ -229,12 +254,10 @@ body.land .ov .bs .b{width:calc(var(--u)*2.8);height:calc(var(--u)*2.8);font-siz
     document.documentElement.style.setProperty('--u', Math.min(w / 100, h * 1.15 / 100) + 'px');
     var o = qp('o'), land = o ? o === 'landscape' : w > h;
     document.body.classList.toggle('land', land);
-    /* Some native compositors mount the webview rotated 180deg in portrait,
-       pushing the bottom-anchored score bar to the TOP of the frame.
-       flip=1 (default) counter-rotates the page to compensate.
-       If the bar ends up on its SIDE, the compositor rotates 90deg instead:
-       use flip=0 and report back - that needs a different fix. */
-    var flip = qp('flip') !== '0';
+    /* The stream is now portrait-sized in portrait, so no counter-rotation is needed.
+       The 180deg flip is OPT-IN only: add flip=1 to the URL if a compositor ever
+       mounts the page upside down. */
+    var flip = qp('flip') === '1';
     st.style.transform = (flip && !land && w > h) ? 'rotate(180deg)' : '';
     var gap = qn('gap', land ? GAP_LANDSCAPE : GAP_PORTRAIT);
     var sx = qn('shift', land ? SHIFT_X_LANDSCAPE : SHIFT_X_PORTRAIT);
