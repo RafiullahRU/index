@@ -184,7 +184,7 @@ body.land .ov .bs .b{width:calc(var(--u)*2.8);height:calc(var(--u)*2.8);font-siz
       </div>
       <div class="col bowl">
         <div class="lbl">BOWLING</div>
-        <div class="bn" id="bn">Bowler</div> 
+        <div class="bn" id="bn">Bowler</div>
         <div class="balls" id="balls"></div>
         <div class="tgt" id="tgt"><span id="tgtn"></span> <b id="tgts"></b></div>
       </div>
@@ -360,8 +360,7 @@ body.land .ov .bs .b{width:calc(var(--u)*2.8);height:calc(var(--u)*2.8);font-siz
     $('bn').textContent = bw.name || 'Bowler';
     var bruns = parseInt(bw.runs, 10) || 0;
     if (pd && pd.bowlName === bw.name && bruns > pd.bowlRuns) floatText('+' + (bruns - pd.bowlRuns), '#ff7a3d', 86);
-    setT($('bf'), (bw.wickets || 0) + '-' + (bw.runs || 0) + ' (' + (bw.overs || 0) + ')', 'bump');
-
+     
     var arr = stack.slice(-6), key = arr.join(',') + '|' + stack.length;
     if (key !== lastBalls){
       var grew = !!pd && stack.length > pd.len;
