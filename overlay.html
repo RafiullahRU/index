@@ -88,13 +88,20 @@ html,body{width:100%;height:100%;background:transparent;overflow:hidden;color:#f
 .pt{position:absolute;left:50%;top:50%;font-size:calc(var(--u)*6);opacity:0;animation:burst 1.5s ease-out forwards}
 
 /* ---------- PLAYER / BOWLER CARD ---------- */
-/* bottom here is only a fallback: placeCards() sets the real value from the measured bar height */
-#card{position:absolute;left:50%;bottom:calc(var(--g) + var(--u)*13);width:calc(var(--u)*92);max-width:94%;
+/* Same left/right edges as the score bar, so they line up and stay centered.
+   bottom here is only a fallback: placeCards() sets the real value from the measured bar position.
+   Only opacity + transform are animated (NOT bottom), so the card never slides between clicks. */
+#card{position:absolute;
+  left:calc(var(--u)*3 + var(--sx,0px));right:calc(var(--u)*3 - var(--sx,0px));
+  bottom:calc(var(--g) + var(--u)*13);
+  width:auto;max-width:none;
   border-radius:calc(var(--u)*4);padding:calc(var(--u)*3);
   background:linear-gradient(150deg,rgba(4,8,22,.96),rgba(30,10,60,.96));
   border:calc(var(--u)*.3) solid rgba(0,210,255,.55);box-shadow:0 0 calc(var(--u)*7) rgba(0,210,255,.45);
-  opacity:0;transform:translate(-50%,40%) scale(.85);pointer-events:none;transition:all .5s cubic-bezier(.2,1.3,.3,1);overflow:hidden}
-#card.open{opacity:1;transform:translate(-50%,0) scale(1)}
+  opacity:0;transform:translateY(40%) scale(.85);pointer-events:none;
+  transition:opacity .5s ease,transform .5s cubic-bezier(.2,1.3,.3,1);
+  overflow:hidden}
+#card.open{opacity:1;transform:none}
 #card:before{content:"";position:absolute;left:0;right:0;top:0;height:calc(var(--u)*.9);
   background:linear-gradient(90deg,var(--c1),var(--vio),var(--c2),var(--c1));background-size:300% 100%;animation:slide 3s linear infinite}
 .ch{display:flex;align-items:center;gap:calc(var(--u)*2.4);padding-bottom:calc(var(--u)*2);margin-bottom:calc(var(--u)*2);border-bottom:calc(var(--u)*.2) solid rgba(255,255,255,.12)}
@@ -112,10 +119,16 @@ html,body{width:100%;height:100%;background:transparent;overflow:hidden;color:#f
 .sb span{display:block;color:#9aa6bd;font-weight:800;font-size:calc(var(--u)*2.3);letter-spacing:.14em;margin-top:calc(var(--u)*.4)}
 
 /* ---------- FULL SCOREBOARD ---------- */
-#board{position:absolute;z-index:5;inset:calc(var(--u)*10) calc(var(--u)*4) calc(var(--g) + var(--u)*14);border-radius:calc(var(--u)*4);
+/* Same left/right edges as the score bar and the player card. */
+#board{position:absolute;z-index:5;
+  top:calc(var(--u)*10);
+  left:calc(var(--u)*3 + var(--sx,0px));right:calc(var(--u)*3 - var(--sx,0px));
+  bottom:calc(var(--g) + var(--u)*14);
+  border-radius:calc(var(--u)*4);
   background:linear-gradient(160deg,rgba(4,8,22,.96),rgba(22,10,50,.96));border:calc(var(--u)*.3) solid rgba(0,210,255,.5);
   box-shadow:0 0 calc(var(--u)*8) rgba(0,210,255,.35);padding:calc(var(--u)*3.5);overflow:hidden;
-  opacity:0;transform:translateY(8%) scale(.96);pointer-events:none;transition:all .5s cubic-bezier(.2,.9,.3,1.1)}
+  opacity:0;transform:translateY(8%) scale(.96);pointer-events:none;
+  transition:opacity .5s ease,transform .5s cubic-bezier(.2,.9,.3,1.1)}
 #board.open{opacity:1;transform:none}
 #board:before{content:"";position:absolute;left:0;right:0;top:0;height:calc(var(--u)*.9);
   background:linear-gradient(90deg,var(--c1),var(--vio),var(--c2),var(--c1));background-size:300% 100%;animation:slide 3s linear infinite}
@@ -135,8 +148,12 @@ html,body{width:100%;height:100%;background:transparent;overflow:hidden;color:#f
 body.land #dock{left:calc(2% + var(--sx,0px));right:calc(2% - var(--sx,0px))}
 body.land #bar{max-width:none}
 
+/* ---------- LANDSCAPE: player card is centered (50% wide), so it does not stretch across the screen ---------- */
+body.land #card{left:calc(25% + var(--sx,0px));right:calc(25% - var(--sx,0px))}
+
 /* ---------- LANDSCAPE: compact two-column team board ---------- */
-body.land #board{inset:calc(var(--u)*5) calc(var(--u)*10) calc(var(--g) + var(--u)*12);padding:calc(var(--u)*2) calc(var(--u)*2.6);
+body.land #board{top:calc(var(--u)*5);left:calc(var(--u)*10);right:calc(var(--u)*10);bottom:calc(var(--g) + var(--u)*12);
+  padding:calc(var(--u)*2) calc(var(--u)*2.6);
   display:grid;grid-template-columns:1fr 1fr;column-gap:calc(var(--u)*2.4);align-content:start}
 body.land #bt{grid-column:1/-1;font-size:calc(var(--u)*3);margin-bottom:calc(var(--u)*1)}
 body.land .card{margin-bottom:0;padding:calc(var(--u)*1.4)}
@@ -233,13 +250,14 @@ body.land .ov .bs .b{width:calc(var(--u)*2.8);height:calc(var(--u)*2.8);font-siz
     placeCards();
   }
 
-  /* ---- keep cards a fixed gap above the REAL score bar height ---- */
+  /* ---- keep cards a fixed gap above the REAL score bar ----
+     offsetTop ignores CSS transforms, so the dock's rise / shake / surge animations
+     can never change the measurement. */
   function placeCards(){
-    var dock = $('dock');
-    if (!dock) return;
+    var dock = $('dock'), st = $('stage');
+    if (!dock || !st) return;
     var u = parseFloat(document.documentElement.style.getPropertyValue('--u')) || 8;
-    var bottom = parseFloat(getComputedStyle(dock).bottom) || 0;
-    var fromBottom = bottom + dock.offsetHeight + u * CARD_GAP;
+    var fromBottom = st.offsetHeight - dock.offsetTop + u * CARD_GAP;
     $('card').style.bottom = fromBottom + 'px';
     $('board').style.bottom = fromBottom + 'px';
   }
@@ -309,9 +327,11 @@ body.land .ov .bs .b{width:calc(var(--u)*2.8);height:calc(var(--u)*2.8);font-siz
     var el = $('card');
     if (cardKey === key && el.classList.contains('open')){ hideCards(); return; }
     cardKey = key; lastCard = cardHtml(key); el.innerHTML = lastCard;
-    placeCards();
     if (boardOpen) window.toggleBoard(false);
-    el.classList.remove('open'); void el.offsetWidth; el.classList.add('open');
+    placeCards();
+    el.classList.remove('open'); void el.offsetWidth;
+    placeCards();                       // measure again right before opening
+    el.classList.add('open');
     clearTimeout(cardTimer); cardTimer = setTimeout(hideCards, 7000);
   }
 
