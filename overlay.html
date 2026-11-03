@@ -88,6 +88,7 @@ html,body{width:100%;height:100%;background:transparent;overflow:hidden;color:#f
 .pt{position:absolute;left:50%;top:50%;font-size:calc(var(--u)*6);opacity:0;animation:burst 1.5s ease-out forwards}
 
 /* ---------- PLAYER / BOWLER CARD ---------- */
+/* bottom here is only a fallback: placeCards() sets the real value from the measured bar height */
 #card{position:absolute;left:50%;bottom:calc(var(--g) + var(--u)*13);width:calc(var(--u)*92);max-width:94%;
   border-radius:calc(var(--u)*4);padding:calc(var(--u)*3);
   background:linear-gradient(150deg,rgba(4,8,22,.96),rgba(30,10,60,.96));
@@ -205,6 +206,7 @@ body.land .ov .bs .b{width:calc(var(--u)*2.8);height:calc(var(--u)*2.8);font-siz
   var GAP_LANDSCAPE = 0.3;    // same in landscape
   var SHIFT_X_PORTRAIT = 0;   // move the bar right (+) or left (-) in portrait
   var SHIFT_X_LANDSCAPE = 0;  // move the bar right (+) or left (-) in landscape
+  var CARD_GAP = 1.5;         // gap (in u) between the top of the score bar and the bottom of the cards
   function qp(name){ var m = location.search.match(new RegExp('[?&]' + name + '=(-?[0-9.]+|[a-z]+)')); return m ? m[1] : null; }
   function qn(name, fallback){ var v = parseFloat(qp(name)); return isNaN(v) ? fallback : v; }
   function $(i){ return document.getElementById(i); }
@@ -228,8 +230,24 @@ body.land .ov .bs .b{width:calc(var(--u)*2.8);height:calc(var(--u)*2.8);font-siz
     root.setProperty('--g', 'calc(var(--u)*' + gap + ')');
     root.setProperty('--sx', 'calc(var(--u)*' + sx + ')');
     if (debug){ $('stage').style.boxShadow = 'inset 0 0 0 4px red'; var d = $('dbg'); d.style.display = 'block'; d.textContent = w + 'x' + h + ' u=' + Math.min(w / 100, h * 1.15 / 100).toFixed(2) + (land ? ' LAND' : ' PORT') + ' gap=' + gap + ' shift=' + sx; }
+    placeCards();
   }
+
+  /* ---- keep cards a fixed gap above the REAL score bar height ---- */
+  function placeCards(){
+    var dock = $('dock');
+    if (!dock) return;
+    var u = parseFloat(document.documentElement.style.getPropertyValue('--u')) || 8;
+    var bottom = parseFloat(getComputedStyle(dock).bottom) || 0;
+    var fromBottom = bottom + dock.offsetHeight + u * CARD_GAP;
+    $('card').style.bottom = fromBottom + 'px';
+    $('board').style.bottom = fromBottom + 'px';
+  }
+
   fit(); window.addEventListener('resize', fit); setTimeout(fit, 300); setTimeout(fit, 1500);
+  if (window.ResizeObserver) new ResizeObserver(placeCards).observe($('bar'));
+  window.addEventListener('resize', placeCards);
+  setTimeout(placeCards, 400); setTimeout(placeCards, 1600);
 
   function ballHtml(r, isNew){
     var c = r === 'W' ? 'w' : r === '6' ? 's' : r === '4' ? 'f' : '';
@@ -291,6 +309,7 @@ body.land .ov .bs .b{width:calc(var(--u)*2.8);height:calc(var(--u)*2.8);font-siz
     var el = $('card');
     if (cardKey === key && el.classList.contains('open')){ hideCards(); return; }
     cardKey = key; lastCard = cardHtml(key); el.innerHTML = lastCard;
+    placeCards();
     if (boardOpen) window.toggleBoard(false);
     el.classList.remove('open'); void el.offsetWidth; el.classList.add('open');
     clearTimeout(cardTimer); cardTimer = setTimeout(hideCards, 7000);
@@ -360,7 +379,7 @@ body.land .ov .bs .b{width:calc(var(--u)*2.8);height:calc(var(--u)*2.8);font-siz
     $('bn').textContent = bw.name || 'Bowler';
     var bruns = parseInt(bw.runs, 10) || 0;
     if (pd && pd.bowlName === bw.name && bruns > pd.bowlRuns) floatText('+' + (bruns - pd.bowlRuns), '#ff7a3d', 86);
-     
+
     var arr = stack.slice(-6), key = arr.join(',') + '|' + stack.length;
     if (key !== lastBalls){
       var grew = !!pd && stack.length > pd.len;
@@ -377,11 +396,13 @@ body.land .ov .bs .b{width:calc(var(--u)*2.8);height:calc(var(--u)*2.8);font-siz
     // celebration for a new boundary / wicket
     if (pd && stack.length > pd.len && COL[last]) showBig(last);
 
+    placeCards();
     pd = { len: stack.length, runs: runs, wk: wk, teamKey: teamKey, bowlRuns: bruns, bowlName: bw.name };
   };
 
   window.setLive = function(on){ $('live').classList.toggle('on', !!on); };
   window.toggleBoard = function(force){
+    placeCards();
     boardOpen = typeof force === 'boolean' ? force : !boardOpen;
     if (boardOpen) hideCards();
     $('board').classList.toggle('open', boardOpen);
