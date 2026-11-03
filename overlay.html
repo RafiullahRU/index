@@ -23,7 +23,7 @@ html,body{width:100%;height:100%;background:transparent;overflow:hidden;color:#f
 /* ---------- SCORE BAR (always bottom) ---------- */
 #dock{position:absolute;left:calc(var(--u)*3 + var(--sx,0px));right:calc(var(--u)*3 - var(--sx,0px));bottom:var(--g);
   display:flex;justify-content:center;animation:rise .8s cubic-bezier(.2,.9,.3,1.2) both}
-#bar{position:relative;width:100%;max-width:calc(var(--u)*118);display:grid;grid-template-columns:1.3fr 1.05fr .95fr;align-items:center;gap:calc(var(--u)*1.5);
+#bar{position:relative;width:100%;max-width:calc(var(--u)*118);display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr) minmax(0,.9fr);align-items:center;gap:calc(var(--u)*1.5);
   padding:calc(var(--u)*2.4) calc(var(--u)*2.4) calc(var(--u)*2);border-radius:calc(var(--u)*4);
   background:linear-gradient(135deg,rgba(6,10,26,.93),rgba(24,10,54,.93));
   border:calc(var(--u)*.3) solid rgba(0,210,255,.5);
@@ -36,17 +36,19 @@ html,body{width:100%;height:100%;background:transparent;overflow:hidden;color:#f
 #bar.shake{animation:shake .8s ease-out}
 .col{min-width:0}
 .bat{display:flex;align-items:center;gap:calc(var(--u)*.8);padding:calc(var(--u)*.6) calc(var(--u)*1);
-  border-radius:calc(var(--u)*1.2);font-size:calc(var(--u)*3);white-space:nowrap;transition:background .4s}
+  border-radius:calc(var(--u)*1.2);font-size:calc(var(--u)*2.8);white-space:nowrap;transition:background .4s}
 .bat.strike{background:linear-gradient(90deg,rgba(0,210,255,.28),rgba(0,210,255,0))}
 .bat .dot{width:calc(var(--u)*1.6);color:var(--c1);font-size:calc(var(--u)*2)}
 .bat .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;font-weight:700}
-.bat .rn{display:inline-block;font-weight:900;color:var(--c1);font-size:calc(var(--u)*3.6)}
-.bat .bl{color:#9aa6bd;font-size:calc(var(--u)*2.4)}
+.bat .rn{display:inline-block;font-weight:900;color:var(--c1);font-size:calc(var(--u)*3.2);margin-left:calc(var(--u)*.6)}
+.bat .bl{color:#9aa6bd;font-size:calc(var(--u)*2.2)}
 .mid{text-align:center}
-.score{display:flex;align-items:center;justify-content:center;gap:calc(var(--u)*2)}
-.tm{font-weight:900;font-size:calc(var(--u)*4.2);color:var(--c1);letter-spacing:.06em;text-shadow:0 0 calc(var(--u)*2) rgba(0,210,255,.8)}
-.sep{width:calc(var(--u)*.3);height:calc(var(--u)*5);background:linear-gradient(var(--c1),var(--vio));border-radius:2px}
-.sc{display:inline-block;font-weight:900;font-size:calc(var(--u)*6.6);line-height:1;text-shadow:0 calc(var(--u)*.4) calc(var(--u)*2) rgba(0,0,0,.6)}
+.score{display:flex;align-items:center;justify-content:center;gap:calc(var(--u)*1.4);min-width:0}
+.tm{font-weight:900;font-size:calc(var(--u)*3.6);color:var(--c1);letter-spacing:.04em;text-shadow:0 0 calc(var(--u)*2) rgba(0,210,255,.8);max-width:32%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sep{width:calc(var(--u)*.3);height:calc(var(--u)*4);background:linear-gradient(var(--c1),var(--vio));border-radius:2px}
+.sc{display:inline-block;font-weight:900;font-size:calc(var(--u)*6.6);line-height:1;text-shadow:0 calc(var(--u)*.4) calc(var(--u)*2) rgba(0,0,0,.6);white-space:nowrap}
+.sc.sm{font-size:calc(var(--u)*5.2)}
+.sc.xs{font-size:calc(var(--u)*4.2)}
 .rates{display:flex;justify-content:center;gap:calc(var(--u)*3);margin-top:calc(var(--u)*1.2);font-size:calc(var(--u)*2.8);font-weight:800}
 .rates span{display:inline-block}
 .rates span b{color:#9aa6bd;font-size:calc(var(--u)*2.3);margin-right:calc(var(--u)*.8);letter-spacing:.08em}
@@ -206,7 +208,7 @@ body.land .ov .bs .b{width:calc(var(--u)*2.8);height:calc(var(--u)*2.8);font-siz
   var lastBalls = '', lastBoard = '', lastCard = '', prevBat = [null, null, null];
   var debug = location.search.indexOf('debug') >= 0;
   /* ---- layout tuning (units of u, about 1% of the screen width in portrait / height in landscape) ---- */
-  var GAP_PORTRAIT = 0;       // portrait: distance of score bar from bottom edge (0 = flush/bottom, negative = tucked slightly off-screen)
+  var GAP_PORTRAIT = 0;       // distance of the score bar from the bottom edge in portrait (0 = touching the bottom, negative = lower)
   var GAP_LANDSCAPE = 0.3;    // same in landscape
   var SHIFT_X_PORTRAIT = 0;   // move the bar right (+) or left (-) in portrait
   var SHIFT_X_LANDSCAPE = 0;  // move the bar right (+) or left (-) in landscape
@@ -227,6 +229,13 @@ body.land .ov .bs .b{width:calc(var(--u)*2.8);height:calc(var(--u)*2.8);font-siz
     document.documentElement.style.setProperty('--u', Math.min(w / 100, h * 1.15 / 100) + 'px');
     var o = qp('o'), land = o ? o === 'landscape' : w > h;
     document.body.classList.toggle('land', land);
+    /* Some native compositors mount the webview rotated 180deg in portrait,
+       pushing the bottom-anchored score bar to the TOP of the frame.
+       flip=1 (default) counter-rotates the page to compensate.
+       If the bar ends up on its SIDE, the compositor rotates 90deg instead:
+       use flip=0 and report back - that needs a different fix. */
+    var flip = qp('flip') !== '0';
+    st.style.transform = (flip && !land && w > h) ? 'rotate(180deg)' : '';
     var gap = qn('gap', land ? GAP_LANDSCAPE : GAP_PORTRAIT);
     var sx = qn('shift', land ? SHIFT_X_LANDSCAPE : SHIFT_X_PORTRAIT);
     var root = document.documentElement.style;
@@ -357,6 +366,8 @@ body.land .ov .bs .b{width:calc(var(--u)*2.8);height:calc(var(--u)*2.8);font-siz
       if (wk > pd.wk){ anim($('bar'), 'shake'); anim($('flash'), 'go'); $('flash').style.background = 'radial-gradient(circle,#ff3b5c88,transparent 70%)'; }
     }
     $('sc').textContent = score;
+    $('sc').classList.toggle('sm', score.length > 5 && score.length <= 7);
+    $('sc').classList.toggle('xs', score.length > 7);
     setT($('crr'), d.crr || '0.00', 'bump');
     $('rrrw').style.display = inn2 ? '' : 'none';
     setT($('rrr'), d.rrr || '0.00', 'bump');
