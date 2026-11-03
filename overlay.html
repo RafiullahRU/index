@@ -164,6 +164,30 @@ body:not(.land) #board{bottom:calc(var(--g) + var(--u)*20)}
 body.land #dock{left:16%;right:16%}
 body.land #bar{max-width:none}
 
+/* ---------- LANDSCAPE: compact (shorter) score bar ---------- */
+body.land #bar{padding:calc(var(--u)*1.2) calc(var(--u)*2) calc(var(--u)*1);gap:calc(var(--u)*1);border-radius:calc(var(--u)*3)}
+body.land #bar:before{height:calc(var(--u)*.5)}
+body.land .bat{padding:calc(var(--u)*.2) calc(var(--u)*.8);font-size:calc(var(--u)*2.4)}
+body.land .bat .dot{font-size:calc(var(--u)*1.6)}
+body.land .bat .rn{font-size:calc(var(--u)*2.8)}
+body.land .bat .bl{font-size:calc(var(--u)*1.9)}
+body.land .tm{font-size:calc(var(--u)*3)}
+body.land .sep{height:calc(var(--u)*2.8)}
+body.land .sc{font-size:calc(var(--u)*5)}
+body.land .sc.sm{font-size:calc(var(--u)*4.2)}
+body.land .sc.xs{font-size:calc(var(--u)*3.6)}
+body.land .rates{margin-top:calc(var(--u)*.3);font-size:calc(var(--u)*2.3);gap:calc(var(--u)*2.4)}
+body.land .rates span b{font-size:calc(var(--u)*1.9)}
+body.land .bowl .lbl{font-size:calc(var(--u)*1.6)}
+body.land .bowl .bn{font-size:calc(var(--u)*2.5)}
+body.land .bowl .bf{font-size:calc(var(--u)*2.1);margin-top:0}
+body.land .balls{margin-top:calc(var(--u)*.4);min-height:calc(var(--u)*3.2);gap:calc(var(--u)*.6)}
+body.land .b{width:calc(var(--u)*3.2);height:calc(var(--u)*3.2);font-size:calc(var(--u)*1.9)}
+body.land .tgt{margin-top:calc(var(--u)*.4);padding:calc(var(--u)*.3) calc(var(--u)*1.2);font-size:calc(var(--u)*1.9)}
+/* floating text / cards sit closer to the shorter bar */
+body.land .fl{bottom:calc(var(--g) + var(--u)*16)}
+body.land #card{bottom:calc(var(--g) + var(--u)*17)}
+
 /* ---------- LANDSCAPE: compact two-column team board ---------- */
 body.land #board{inset:calc(var(--u)*5) calc(var(--u)*10) calc(var(--g) + var(--u)*24);padding:calc(var(--u)*2) calc(var(--u)*2.6);
   display:grid;grid-template-columns:1fr 1fr;column-gap:calc(var(--u)*2.4);align-content:start}
@@ -213,8 +237,10 @@ body.land .ov .bs .b{width:calc(var(--u)*2.8);height:calc(var(--u)*2.8);font-siz
         <div class="score"><span class="tm" id="tm">TEA</span><span class="sep"></span><span class="sc" id="sc">0/0</span></div>
         <div class="rates"><span class="crr" id="crrw"><b>CRR</b><em id="crr" style="font-style:normal">0.00</em></span><span class="rrr" id="rrrw" style="display:none"><b>RRR</b><em id="rrr" style="font-style:normal">0.00</em></span></div>
       </div>
-      <div class="col bowl"> 
-        <div class="bn" id="bn">Bowler</div> 
+      <div class="col bowl">
+        <div class="lbl">BOWLING</div>
+        <div class="bn" id="bn">Bowler</div>
+        <span class="bf" id="bf">0-0 (0)</span>
         <div class="balls" id="balls"></div>
         <div class="tgt" id="tgt"><span id="tgtn"></span> <b id="tgts"></b></div>
       </div>
