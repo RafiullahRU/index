@@ -201,7 +201,8 @@ body.land .ov .bs .b{width:calc(var(--u)*2.8);height:calc(var(--u)*2.8);font-siz
 <div id="stage">
   <div id="flash"></div>
   <div id="top"><div id="live"><i></i>LIVE</div></div>
-  <img id="logo" crossorigin="anonymous" src="https://raw.githubusercontent.com/RafiullahRU/index/refs/heads/main/cr.png" alt="" onerror="this.style.display='none'">
+  <!-- loads cr.png from the SAME folder as overlay.html; if that fails, it tries the full GitHub link once, then hides itself -->
+  <img id="logo" src="cr.png" alt="" onerror="if(!this.dataset.f){this.dataset.f=1;this.src='https://raw.githubusercontent.com/RafiullahRU/index/refs/heads/main/cr.png';}else{this.style.display='none';}">
   <div id="dock">
     <div id="bar">
       <div class="col">
