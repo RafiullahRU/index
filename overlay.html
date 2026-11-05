@@ -91,7 +91,7 @@ html,body{ width:100%;height:100%;background:transparent;overflow:hidden;color:#
 /* Same left/right edges as the score bar, so they line up and stay centered.
    bottom here is only a fallback: placeCards() sets the real value from the measured bar position.
    Only opacity + transform are animated (NOT bottom), so the card never slides between clicks. */
-#card{position:absolute;
+#card{position:absolute;margin-bottom: 40px;
   left:calc(var(--u)*3 + var(--sx,0px));right:calc(var(--u)*3 - var(--sx,0px));
   bottom:calc(var(--g) + var(--u)*13);
   width:auto;max-width:none;
