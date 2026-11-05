@@ -24,11 +24,12 @@ html,body{ width:100%;height:100%;background:transparent;overflow:hidden;color:#
 /* Same rule for portrait AND landscape (landscape only makes it a bit smaller).
    It starts hidden and is shown by the script once the image has really loaded.
    Change the size here (units of u). Move it with top / right. */
-#logo{position:absolute;top:calc(var(--u)*3);right:calc(var(--u)*3);
+#logo,#logoFb{position:absolute;top:calc(var(--u)*3);right:calc(var(--u)*3);
   width:calc(var(--u)*11);height:calc(var(--u)*11);object-fit:contain;display:none;
   background:transparent;border:0;box-shadow:none;
   pointer-events:none;z-index:60}
-body.land #logo{width:calc(var(--u)*9);height:calc(var(--u)*9);top:calc(var(--u)*2.5)}
+body.land #logo,body.land #logoFb{width:calc(var(--u)*9);height:calc(var(--u)*9);top:calc(var(--u)*2.5)}
+#logoFb{display:none}#logoFb svg{width:100%;height:100%;display:block}
 
 /* ---------- SCORE BAR (always bottom) ---------- */
 #dock{position:absolute;left:calc(var(--u)*3 + var(--sx,0px));right:calc(var(--u)*3 - var(--sx,0px));bottom:var(--g);
@@ -205,6 +206,7 @@ body.land .ov .bs .b{width:calc(var(--u)*2.8);height:calc(var(--u)*2.8);font-siz
   <div id="top"><div id="live"><i></i>LIVE</div></div>
   <!-- The logo is loaded by the script below (it tries several URLs and retries), then shown in BOTH portrait and landscape. -->
   <img id="logo" alt="">
+  <div id="logoFb"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="#0a1030" stroke="#00d2ff" stroke-width="5"/><text x="50" y="62" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="38" fill="#00d2ff">CR</text></svg></div>
   <div id="dock">
     <div id="bar">
       <div class="col">
@@ -241,6 +243,9 @@ body.land .ov .bs .b{width:calc(var(--u)*2.8);height:calc(var(--u)*2.8);font-siz
   var LOGO_EXTRA_RIGHT = 0;   // extra gap (in u) between the icon and the right edge of the score bar (0 = flush with the bar's right edge)
   var CARD_GAP = 1.5;         // gap (in u) between the top of the score bar and the bottom of the full scoreboard
   /* places the logo image is tried from, in this order (the first one that loads wins) */
+  /* BEST OPTION: paste your logo here as base64 so it needs no network at all:
+     LOGO_DATA = 'data:image/png;base64,AAAA...';   (make it with:  base64 -w0 cr.png ) */
+  var LOGO_DATA = '';
   var LOGO_SOURCES = [
     'cr.png',
     'https://rafiullahru.github.io/index/cr.png',
@@ -293,7 +298,7 @@ body.land .ov .bs .b{width:calc(var(--u)*2.8);height:calc(var(--u)*2.8);font-siz
       var barRight = dock.offsetLeft + bar.offsetLeft + bar.offsetWidth;
       var r = st.offsetWidth - barRight + u * LOGO_EXTRA_RIGHT;
       if (!bar.offsetWidth || !isFinite(r) || r < 0 || r > st.offsetWidth * 0.4) r = u * 3;
-      logo.style.right = r + 'px';
+      logo.style.right = r + 'px'; var fbEl = $('logoFb'); if (fbEl) fbEl.style.right = r + 'px';
     }
   }
 
@@ -333,28 +338,31 @@ body.land .ov .bs .b{width:calc(var(--u)*2.8);height:calc(var(--u)*2.8);font-siz
     }catch(e){ /* if the browser blocks canvas access, the original image is shown as is */ }
   }
 
-  /* ---- logo loader: tries every source, retries on failure, shows the icon only once it has really loaded ---- */
+  /* ---- logo loader ----
+     1) the embedded base64 (if you pasted one), 2) the hosted files, retrying on failure.
+     A built-in "CR" badge is shown while the real image is not available, so an icon is ALWAYS visible. */
   (function(){
-    var im = $('logo'), idx = 0, tries = 0, done = false;
+    var im = $('logo'), fb = $('logoFb'), list = (LOGO_DATA ? [LOGO_DATA] : []).concat(LOGO_SOURCES);
+    var idx = 0, tries = 0, ok = false;
+    function showFallback(){ if (!ok){ fb.style.display = 'block'; placeCards(); } }
     function load(){
-      var s = LOGO_SOURCES[idx];
-      /* cache-buster, so a failed / stale copy is never reused after the page reloads */
+      var s = list[idx];
       var url = s.indexOf('data:') === 0 ? s : s + (s.indexOf('?') >= 0 ? '&' : '?') + 't=' + Date.now();
-      im.crossOrigin = 'anonymous';
-      im.src = url;
+      im.src = url;                                   // no crossOrigin: it can make a normal image fail to load
     }
     im.onload = function(){
       if (!im.naturalWidth) return;
-      im.style.display = 'block';                   // visible in portrait AND landscape
-      if (!done){ done = true; cleanLogo(); }       // swapping src to the cleaned copy triggers onload once more (harmless)
+      im.style.display = 'block'; fb.style.display = 'none';
+      if (!ok){ ok = true; cleanLogo(); }
       placeCards();
     };
     im.onerror = function(){
-      if (done) return;                             // the cleaned copy can never fail, but be safe
-      idx = (idx + 1) % LOGO_SOURCES.length;
-      tries++;
-      if (tries < 9) setTimeout(load, tries * 400);
+      if (ok) return;
+      showFallback();
+      idx = (idx + 1) % list.length;
+      if (++tries < 9) setTimeout(load, tries * 400);
     };
+    setTimeout(showFallback, 2500);                   // still nothing after 2.5 s: show the badge
     load();
   })();
 
