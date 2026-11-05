@@ -94,7 +94,9 @@ html,body{ width:100%;height:100%;background:transparent;overflow:hidden;color:#
 #card{position:absolute;
   left:50%;top:50%;
   width:calc(var(--u)*80);max-width:92%;
-  height:calc(var(--u)*58);            /* fixed height = same size for batter1, batter2 and bowler */
+  /* fixed height, locked with !important so nothing (old inline styles, content size) can change it */
+  height:calc(var(--u)*58) !important;min-height:calc(var(--u)*58) !important;max-height:calc(var(--u)*58) !important;
+  bottom:auto !important;
   display:flex;flex-direction:column;justify-content:center;
   border-radius:calc(var(--u)*4);padding:calc(var(--u)*3);
   background:linear-gradient(150deg,rgba(4,8,22,.96),rgba(30,10,60,.96));
@@ -105,7 +107,7 @@ html,body{ width:100%;height:100%;background:transparent;overflow:hidden;color:#
 #card.open{opacity:1;transform:translate(-50%,-50%) scale(1)}
 #card:before{content:"";position:absolute;left:0;right:0;top:0;height:calc(var(--u)*.9);
   background:linear-gradient(90deg,var(--c1),var(--vio),var(--c2),var(--c1));background-size:300% 100%;animation:slide 3s linear infinite}
-.ch{display:flex;align-items:center;gap:calc(var(--u)*2.4);padding-bottom:calc(var(--u)*2);margin-bottom:calc(var(--u)*3);border-bottom:calc(var(--u)*.2) solid rgba(255,255,255,.12)}
+.ch{flex:none;display:flex;align-items:center;gap:calc(var(--u)*2.4);padding-bottom:calc(var(--u)*2);margin-bottom:calc(var(--u)*3);border-bottom:calc(var(--u)*.2) solid rgba(255,255,255,.12)}
 .ci{width:calc(var(--u)*10);height:calc(var(--u)*10);flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:calc(var(--u)*5.5);
   background:rgba(0,210,255,.18);border:calc(var(--u)*.3) solid rgba(0,210,255,.6);box-shadow:0 0 calc(var(--u)*3) rgba(0,210,255,.6)}
 .cn{flex:1;min-width:0}
@@ -113,8 +115,9 @@ html,body{ width:100%;height:100%;background:transparent;overflow:hidden;color:#
 .crole{color:var(--c1);font-weight:800;font-size:calc(var(--u)*2.6);letter-spacing:.2em}
 .cbadge{flex:none;padding:calc(var(--u)*.8) calc(var(--u)*2);border-radius:999px;font-weight:900;font-size:calc(var(--u)*2.3);letter-spacing:.1em;
   color:#00301b;background:linear-gradient(90deg,#00ff88,#00d2ff);animation:blink 1.2s infinite}
-.sg{display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*1.6)}
-.sb{min-width:0;text-align:center;padding:calc(var(--u)*1.8) calc(var(--u)*.6);border-radius:calc(var(--u)*2);background:rgba(255,255,255,.06);
+/* stat grid fills ALL the remaining height of the card: 2 equal rows, so batter and bowler cards look identical */
+.sg{flex:1;min-height:0;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr);gap:calc(var(--u)*1.6)}
+.sb{min-width:0;min-height:0;display:flex;flex-direction:column;justify-content:center;text-align:center;padding:calc(var(--u)*1.8) calc(var(--u)*.6);border-radius:calc(var(--u)*2);background:rgba(255,255,255,.06);
   border:calc(var(--u)*.25) solid var(--c,#00d2ff)}
 .sb b{display:block;font-weight:900;font-size:calc(var(--u)*6);color:var(--c,#00d2ff);text-shadow:0 0 calc(var(--u)*2) var(--c,#00d2ff)}
 .sb span{display:block;color:#9aa6bd;font-weight:800;font-size:calc(var(--u)*2.3);letter-spacing:.14em;margin-top:calc(var(--u)*.4)}
@@ -312,7 +315,7 @@ body.land .ov .bs .b{width:calc(var(--u)*2.8);height:calc(var(--u)*2.8);font-siz
     if (key === 'bowl'){
       var w = d.bowler || {}, ov = num(w.overs), balls = Math.floor(ov) * 6 + Math.round((ov % 1) * 10);
       var eco = w.economy != null ? w.economy : (balls > 0 ? (num(w.runs) / (balls / 6)).toFixed(2) : '0.00');
-      return '<div class="ch"><div class="ci">🏏</div><div class="cn"><div class="cname">' + esc(w.name || 'Bowler') + '</div><div class="crole">BOWLER</div></div></div>' +
+      return '<div class="ch"><div class="ci">🏏</div><div class="cn"><div class="cname">' + esc(w.name || 'Bowler') + '</div><div class="crole">BOWLER</div></div><div class="cbadge" style="visibility:hidden;animation:none">ON STRIKE</div></div>' +
         '<div class="sg">' + sb(w.overs || 0, 'OVERS', '#00d2ff') + sb(w.runs || 0, 'RUNS', '#ffc83d') + sb(w.wickets || 0, 'WICKETS', '#ff3b5c') +
         sb(eco, 'ECONOMY', '#00ff88') + sb((d.currentRunStack || []).length, 'THIS OVER', '#8a7bff') + sb(d.extra && d.extra.total != null ? d.extra.total : 0, 'EXTRAS', '#ff7a3d') + '</div>';
     }
