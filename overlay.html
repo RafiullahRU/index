@@ -24,7 +24,7 @@ html,body{ width:100%;height:100%;background:transparent;overflow:hidden;color:#
 /* Change the size here (units of u). Move it with top / right. */
 #logo{position:absolute;top:calc(var(--u)*3);right:calc(var(--u)*3);
   width:calc(var(--u)*11);height:calc(var(--u)*11);object-fit:contain;
-  filter:drop-shadow(0 calc(var(--u)*.5) calc(var(--u)*1.5) rgba(0,0,0,.6));
+  background:transparent;border:0;box-shadow:none;   /* no background color at all */
   pointer-events:none;z-index:6}
 body.land #logo{width:calc(var(--u)*9);height:calc(var(--u)*9);top:calc(var(--u)*2.5);right:calc(var(--u)*3)}
 
@@ -201,7 +201,7 @@ body.land .ov .bs .b{width:calc(var(--u)*2.8);height:calc(var(--u)*2.8);font-siz
 <div id="stage">
   <div id="flash"></div>
   <div id="top"><div id="live"><i></i>LIVE</div></div>
-  <img id="logo" src="https://raw.githubusercontent.com/RafiullahRU/index/refs/heads/main/cr.png" alt="" onerror="this.style.display='none'">
+  <img id="logo" crossorigin="anonymous" src="https://raw.githubusercontent.com/RafiullahRU/index/refs/heads/main/cr.png" alt="" onerror="this.style.display='none'">
   <div id="dock">
     <div id="bar">
       <div class="col">
@@ -235,6 +235,7 @@ body.land .ov .bs .b{width:calc(var(--u)*2.8);height:calc(var(--u)*2.8);font-siz
   var GAP_LANDSCAPE = 0.3;    // same in landscape
   var SHIFT_X_PORTRAIT = 0;   // move the bar right (+) or left (-) in portrait
   var SHIFT_X_LANDSCAPE = 0;  // move the bar right (+) or left (-) in landscape
+  var LOGO_EXTRA_RIGHT = 0;   // extra gap (in u) between the icon and the right edge of the score bar (0 = flush with the bar's right edge)
   var CARD_GAP = 1.5;         // gap (in u) between the top of the score bar and the bottom of the full scoreboard
   function qp(name){ var m = location.search.match(new RegExp('[?&]' + name + '=(-?[0-9.]+|[a-z]+)')); return m ? m[1] : null; }
   function qn(name, fallback){ var v = parseFloat(qp(name)); return isNaN(v) ? fallback : v; }
@@ -273,7 +274,48 @@ body.land .ov .bs .b{width:calc(var(--u)*2.8);height:calc(var(--u)*2.8);font-siz
     var u = parseFloat(document.documentElement.style.getPropertyValue('--u')) || 8;
     var fromBottom = st.offsetHeight - dock.offsetTop + u * CARD_GAP;
     $('board').style.bottom = fromBottom + 'px';
+
+    /* align the icon's right edge with the right edge of the score bar.
+       offsetLeft/offsetWidth ignore CSS transforms, so bar animations never move it. */
+    var bar = $('bar'), logo = $('logo');
+    if (bar && logo){
+      var barRight = dock.offsetLeft + bar.offsetLeft + bar.offsetWidth;
+      logo.style.right = Math.max(0, st.offsetWidth - barRight + u * LOGO_EXTRA_RIGHT) + 'px';
+    }
   }
+
+  /* ---- remove a solid background baked into the PNG (only if the corner pixel is opaque) ---- */
+  var logoCleaned = false;
+  function cleanLogo(){
+    var img = $('logo');
+    if (logoCleaned || !img.naturalWidth) return;
+    logoCleaned = true;
+    try{
+      var w = img.naturalWidth, h = img.naturalHeight;
+      var c = document.createElement('canvas'); c.width = w; c.height = h;
+      var x = c.getContext('2d'); x.drawImage(img, 0, 0);
+      var id = x.getImageData(0, 0, w, h), p = id.data;
+      var r0 = p[0], g0 = p[1], b0 = p[2];
+      if (p[3] < 200) return;                      // already transparent, nothing to do
+      var seen = new Uint8Array(w * h), stack = [];
+      function match(i){ var k = i * 4; return p[k + 3] > 0 && Math.abs(p[k] - r0) + Math.abs(p[k + 1] - g0) + Math.abs(p[k + 2] - b0) <= 60; }
+      function push(i){ if (!seen[i] && match(i)){ seen[i] = 1; stack.push(i); } }
+      var i2;
+      for (i2 = 0; i2 < w; i2++){ push(i2); push((h - 1) * w + i2); }
+      for (i2 = 0; i2 < h; i2++){ push(i2 * w); push(i2 * w + w - 1); }
+      while (stack.length){
+        var i = stack.pop(), cx = i % w, cy = (i - cx) / w;
+        p[i * 4 + 3] = 0;
+        if (cx > 0) push(i - 1);
+        if (cx < w - 1) push(i + 1);
+        if (cy > 0) push(i - w);
+        if (cy < h - 1) push(i + w);
+      }
+      x.putImageData(id, 0, 0);
+      img.src = c.toDataURL('image/png');
+    }catch(e){ /* if the browser blocks canvas access, the original image is shown as is */ }
+  }
+  (function(){ var im = $('logo'); im.addEventListener('load', cleanLogo); if (im.complete) cleanLogo(); })();
 
   fit(); window.addEventListener('resize', fit); setTimeout(fit, 300); setTimeout(fit, 1500);
   if (window.ResizeObserver) new ResizeObserver(placeCards).observe($('bar'));
