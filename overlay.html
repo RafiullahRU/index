@@ -21,12 +21,14 @@ html,body{ width:100%;height:100%;background:transparent;overflow:hidden;color:#
 #live i{width:calc(var(--u)*2);height:calc(var(--u)*2);border-radius:50%;background:#fff;animation:blink 1s infinite}
 
 /* ---------- APP ICON (top right) ---------- */
-/* Change the size here (units of u). Move it with top / right. */
+/* Same rule for portrait AND landscape (landscape only makes it a bit smaller).
+   It starts hidden and is shown by the script once the image has really loaded.
+   Change the size here (units of u). Move it with top / right. */
 #logo{position:absolute;top:calc(var(--u)*3);right:calc(var(--u)*3);
-  width:calc(var(--u)*11);height:calc(var(--u)*11);object-fit:contain;
-  background:transparent;border:0;box-shadow:none;   /* no background color at all */
-  pointer-events:none;z-index:6}
-body.land #logo{width:calc(var(--u)*9);height:calc(var(--u)*9);top:calc(var(--u)*2.5);right:calc(var(--u)*3)}
+  width:calc(var(--u)*11);height:calc(var(--u)*11);object-fit:contain;display:none;
+  background:transparent;border:0;box-shadow:none;
+  pointer-events:none;z-index:60}
+body.land #logo{width:calc(var(--u)*9);height:calc(var(--u)*9);top:calc(var(--u)*2.5)}
 
 /* ---------- SCORE BAR (always bottom) ---------- */
 #dock{position:absolute;left:calc(var(--u)*3 + var(--sx,0px));right:calc(var(--u)*3 - var(--sx,0px));bottom:var(--g);
@@ -201,8 +203,8 @@ body.land .ov .bs .b{width:calc(var(--u)*2.8);height:calc(var(--u)*2.8);font-siz
 <div id="stage">
   <div id="flash"></div>
   <div id="top"><div id="live"><i></i>LIVE</div></div>
-  <!-- loads cr.png from the SAME folder as overlay.html; if that fails, it tries the full GitHub link once, then hides itself -->
-  <img id="logo" src="cr.png" alt="" onerror="if(!this.dataset.f){this.dataset.f=1;this.src='https://raw.githubusercontent.com/RafiullahRU/index/refs/heads/main/cr.png';}else{this.style.display='none';}">
+  <!-- The logo is loaded by the script below (it tries several URLs and retries), then shown in BOTH portrait and landscape. -->
+  <img id="logo" alt="">
   <div id="dock">
     <div id="bar">
       <div class="col">
@@ -238,6 +240,12 @@ body.land .ov .bs .b{width:calc(var(--u)*2.8);height:calc(var(--u)*2.8);font-siz
   var SHIFT_X_LANDSCAPE = 0;  // move the bar right (+) or left (-) in landscape
   var LOGO_EXTRA_RIGHT = 0;   // extra gap (in u) between the icon and the right edge of the score bar (0 = flush with the bar's right edge)
   var CARD_GAP = 1.5;         // gap (in u) between the top of the score bar and the bottom of the full scoreboard
+  /* places the logo image is tried from, in this order (the first one that loads wins) */
+  var LOGO_SOURCES = [
+    'cr.png',
+    'https://rafiullahru.github.io/index/cr.png',
+    'https://raw.githubusercontent.com/RafiullahRU/index/refs/heads/main/cr.png'
+  ];
   function qp(name){ var m = location.search.match(new RegExp('[?&]' + name + '=(-?[0-9.]+|[a-z]+)')); return m ? m[1] : null; }
   function qn(name, fallback){ var v = parseFloat(qp(name)); return isNaN(v) ? fallback : v; }
   function $(i){ return document.getElementById(i); }
@@ -260,7 +268,7 @@ body.land .ov .bs .b{width:calc(var(--u)*2.8);height:calc(var(--u)*2.8);font-siz
     var root = document.documentElement.style;
     root.setProperty('--g', 'calc(var(--u)*' + gap + ')');
     root.setProperty('--sx', 'calc(var(--u)*' + sx + ')');
-    if (debug){ $('stage').style.boxShadow = 'inset 0 0 0 4px red'; var d = $('dbg'); d.style.display = 'block'; d.textContent = w + 'x' + h + ' u=' + Math.min(w / 100, h * 1.15 / 100).toFixed(2) + (land ? ' LAND' : ' PORT') + ' gap=' + gap + ' shift=' + sx; }
+    if (debug){ $('stage').style.boxShadow = 'inset 0 0 0 4px red'; $('logo').style.outline = '2px solid red'; var d = $('dbg'); d.style.display = 'block'; d.textContent = w + 'x' + h + ' u=' + Math.min(w / 100, h * 1.15 / 100).toFixed(2) + (land ? ' LAND' : ' PORT') + ' gap=' + gap + ' shift=' + sx; }
     placeCards();
   }
 
@@ -277,11 +285,15 @@ body.land .ov .bs .b{width:calc(var(--u)*2.8);height:calc(var(--u)*2.8);font-siz
     $('board').style.bottom = fromBottom + 'px';
 
     /* align the icon's right edge with the right edge of the score bar.
-       offsetLeft/offsetWidth ignore CSS transforms, so bar animations never move it. */
+       offsetLeft/offsetWidth ignore CSS transforms, so bar animations never move it.
+       If the measurement is not sane (bar not laid out yet, odd viewport), fall back
+       to the fixed CSS margin so the icon can never end up off-screen. */
     var bar = $('bar'), logo = $('logo');
     if (bar && logo){
       var barRight = dock.offsetLeft + bar.offsetLeft + bar.offsetWidth;
-      logo.style.right = Math.max(0, st.offsetWidth - barRight + u * LOGO_EXTRA_RIGHT) + 'px';
+      var r = st.offsetWidth - barRight + u * LOGO_EXTRA_RIGHT;
+      if (!bar.offsetWidth || !isFinite(r) || r < 0 || r > st.offsetWidth * 0.4) r = u * 3;
+      logo.style.right = r + 'px';
     }
   }
 
@@ -312,11 +324,39 @@ body.land .ov .bs .b{width:calc(var(--u)*2.8);height:calc(var(--u)*2.8);font-siz
         if (cy > 0) push(i - w);
         if (cy < h - 1) push(i + w);
       }
+      /* safety: if the clean-up would erase almost the whole image, keep the original */
+      var clear = 0, k;
+      for (k = 3; k < p.length; k += 4) if (p[k] === 0) clear++;
+      if (clear > w * h * 0.85) return;
       x.putImageData(id, 0, 0);
       img.src = c.toDataURL('image/png');
     }catch(e){ /* if the browser blocks canvas access, the original image is shown as is */ }
   }
-  (function(){ var im = $('logo'); im.addEventListener('load', cleanLogo); if (im.complete) cleanLogo(); })();
+
+  /* ---- logo loader: tries every source, retries on failure, shows the icon only once it has really loaded ---- */
+  (function(){
+    var im = $('logo'), idx = 0, tries = 0, done = false;
+    function load(){
+      var s = LOGO_SOURCES[idx];
+      /* cache-buster, so a failed / stale copy is never reused after the page reloads */
+      var url = s.indexOf('data:') === 0 ? s : s + (s.indexOf('?') >= 0 ? '&' : '?') + 't=' + Date.now();
+      im.crossOrigin = 'anonymous';
+      im.src = url;
+    }
+    im.onload = function(){
+      if (!im.naturalWidth) return;
+      im.style.display = 'block';                   // visible in portrait AND landscape
+      if (!done){ done = true; cleanLogo(); }       // swapping src to the cleaned copy triggers onload once more (harmless)
+      placeCards();
+    };
+    im.onerror = function(){
+      if (done) return;                             // the cleaned copy can never fail, but be safe
+      idx = (idx + 1) % LOGO_SOURCES.length;
+      tries++;
+      if (tries < 9) setTimeout(load, tries * 400);
+    };
+    load();
+  })();
 
   fit(); window.addEventListener('resize', fit); setTimeout(fit, 300); setTimeout(fit, 1500);
   if (window.ResizeObserver) new ResizeObserver(placeCards).observe($('bar'));
