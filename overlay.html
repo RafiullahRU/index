@@ -6,6 +6,8 @@
 <style>
 /* --g = gap under the score bar. Smaller = closer to the bottom (try 0.3 to 1.2). Test with overlay.html?gap=0.5 */
 :root{--u:min(1vw,1.15vh);--g:calc(var(--u)*0.8);--c1:#00d2ff;--c2:#00ff88;--hot:#ff3b5c;--gold:#ffc83d;--vio:#8a2be2}
+:root{--bu:var(--u)}   /* bar unit: same as --u by default (JS doubles it in portrait) */
+#bar{--u:var(--bu)}    /* everything inside the score bar (height, text, balls) uses the bar unit */
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{ width:100%;height:100%;background:transparent;overflow:hidden;color:#fff;
   font-family:-apple-system,"SF Pro Display",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
@@ -243,6 +245,7 @@ body.land .ov .bs .b{width:calc(var(--u)*2.8);height:calc(var(--u)*2.8);font-siz
   var SHIFT_X_LANDSCAPE = 0;  // move the bar right (+) or left (-) in landscape
   var LOGO_EXTRA_RIGHT = 0;   // extra gap (in u) between the icon and the right edge of the score bar (0 = flush with the bar's right edge)
   var CARD_GAP = 1.5;         // gap (in u) between the top of the score bar and the bottom of the full scoreboard
+  var BAR_SCALE_PORTRAIT = 2; // score bar size multiplier in portrait (1 = normal, 2 = double height + text). Landscape always stays 1.
   /* places the logo image is tried from, in this order (the first one that loads wins) */
   /* Your logo, embedded as base64 so it needs no network at all.
      Fill it automatically with:   python3 embed_logo.py overlay.html cr.png
@@ -271,7 +274,10 @@ body.land .ov .bs .b{width:calc(var(--u)*2.8);height:calc(var(--u)*2.8);font-siz
     var root = document.documentElement.style;
     root.setProperty('--g', 'calc(var(--u)*' + gap + ')');
     root.setProperty('--sx', 'calc(var(--u)*' + sx + ')');
-    if (debug){ $('stage').style.boxShadow = 'inset 0 0 0 4px red'; $('logo').style.outline = '2px solid red'; var d = $('dbg'); d.style.display = 'block'; d.textContent = w + 'x' + h + ' u=' + Math.min(w / 100, h * 1.15 / 100).toFixed(2) + (land ? ' LAND' : ' PORT') + ' gap=' + gap + ' shift=' + sx; }
+    /* portrait (height > width): score bar is BAR_SCALE_PORTRAIT times bigger; landscape: normal size */
+    var barScale = land ? 1 : qn('bar', BAR_SCALE_PORTRAIT);
+    root.setProperty('--bu', 'calc(var(--u)*' + barScale + ')');
+    if (debug){ $('stage').style.boxShadow = 'inset 0 0 0 4px red'; $('logo').style.outline = '2px solid red'; var d = $('dbg'); d.style.display = 'block'; d.textContent = w + 'x' + h + ' u=' + Math.min(w / 100, h * 1.15 / 100).toFixed(2) + (land ? ' LAND' : ' PORT') + ' gap=' + gap + ' shift=' + sx + ' bar=' + barScale; }
     placeCards();
   }
 
