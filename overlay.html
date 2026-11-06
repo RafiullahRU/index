@@ -184,6 +184,103 @@ body.land .ov .bw{width:calc(var(--u)*9)}
 body.land .ov .bs{flex-wrap:nowrap}
 body.land .ov .bs .b{width:calc(var(--u)*2.8);height:calc(var(--u)*2.8);font-size:calc(var(--u)*1.5)}
 
+/* =====================================================================
+   PORTRAIT REDESIGN  (everything below only applies when body is NOT .land)
+   The score bar becomes a two-tier broadcast panel:
+     tier 1 (top)    : team chip + BIG score + CRR / RRR pills
+     tier 2 (bottom) : batters (left)  |  bowler + this-over balls (right)
+   Nothing can overlap because every block has its own row / column.
+   ===================================================================== */
+body:not(.land) #dock{left:calc(var(--u)*2.5 + var(--sx,0px));right:calc(var(--u)*2.5 - var(--sx,0px))}
+body:not(.land) #bar{
+  width:100%;max-width:none;margin-bottom:9vh;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  grid-template-areas:"mid mid" "bat bowl";
+  align-items:stretch;
+  column-gap:calc(var(--bu)*1.8);row-gap:calc(var(--bu)*1.1);
+  padding:calc(var(--bu)*1.4) calc(var(--bu)*1.6) calc(var(--bu)*1.5);
+  border-radius:calc(var(--bu)*2.8);
+  border-width:calc(var(--bu)*.22);
+  background:
+    radial-gradient(120% 90% at 50% 0%,rgba(138,43,226,.28),transparent 60%),
+    linear-gradient(160deg,rgba(5,9,24,.95),rgba(20,8,48,.95));
+}
+body:not(.land) #bar:before{height:calc(var(--bu)*.55)}
+body:not(.land) #bar > .col:first-child{grid-area:bat}
+body:not(.land) #bar > .mid{grid-area:mid}
+body:not(.land) #bar > .bowl{grid-area:bowl}
+
+/* tier 1: score */
+body:not(.land) .mid{
+  padding:calc(var(--bu)*.6) 0 calc(var(--bu)*1.3);
+  border-bottom:calc(var(--bu)*.15) solid rgba(255,255,255,.14);
+  display:flex;flex-direction:column;align-items:center;gap:calc(var(--bu)*1)}
+body:not(.land) .score{gap:calc(var(--bu)*1.8);animation:scoreglow 2.6s ease-in-out infinite}
+body:not(.land) .tm{
+  font-size:calc(var(--bu)*2.6);letter-spacing:.1em;color:#00212b;text-shadow:none;
+  padding:calc(var(--bu)*.7) calc(var(--bu)*1.5);border-radius:calc(var(--bu)*1.2);
+  background:linear-gradient(135deg,var(--c1),var(--c2));
+  box-shadow:0 0 calc(var(--bu)*2) rgba(0,210,255,.7)}
+body:not(.land) .sep{height:calc(var(--bu)*4.6);width:calc(var(--bu)*.3)}
+body:not(.land) .sc{font-size:calc(var(--bu)*5.8);letter-spacing:.01em;
+  text-shadow:0 0 calc(var(--bu)*2.4) rgba(0,210,255,.55),0 calc(var(--bu)*.4) calc(var(--bu)*1.6) rgba(0,0,0,.7)}
+body:not(.land) .rates{margin-top:0;gap:calc(var(--bu)*1.4);font-size:calc(var(--bu)*2)}
+body:not(.land) .rates span{
+  padding:calc(var(--bu)*.35) calc(var(--bu)*1.4);border-radius:999px;
+  background:rgba(255,255,255,.07);border:calc(var(--bu)*.15) solid rgba(255,255,255,.16)}
+body:not(.land) .rates .crr{border-color:rgba(0,210,255,.55);background:rgba(0,210,255,.12)}
+body:not(.land) .rates .rrr{border-color:rgba(255,122,61,.6);background:rgba(255,122,61,.14)}
+body:not(.land) .rates span b{font-size:calc(var(--bu)*1.4);margin-right:calc(var(--bu)*.7)}
+
+/* tier 2 left: batters */
+body:not(.land) #bar > .col:first-child{display:flex;flex-direction:column;justify-content:center;gap:calc(var(--bu)*.7)}
+body:not(.land) .bat{
+  gap:calc(var(--bu)*.7);padding:calc(var(--bu)*.6) calc(var(--bu)*.8);
+  border-radius:calc(var(--bu)*1.1);font-size:calc(var(--bu)*2.1);
+  background:rgba(255,255,255,.05);border-left:calc(var(--bu)*.3) solid transparent}
+body:not(.land) .bat.strike{
+  background:linear-gradient(90deg,rgba(0,210,255,.34),rgba(0,210,255,.05));
+  border-left-color:var(--c1)}
+body:not(.land) .bat.strike .dot{animation:blink 1.1s infinite}
+body:not(.land) .bat .dot{width:calc(var(--bu)*1.4);font-size:calc(var(--bu)*1.5)}
+body:not(.land) .bat .rn{font-size:calc(var(--bu)*2.7)}
+body:not(.land) .bat .bl{font-size:calc(var(--bu)*1.6)}
+
+/* tier 2 right: bowler */
+body:not(.land) .bowl{
+  text-align:left;white-space:normal;min-width:0;
+  display:flex;flex-direction:column;justify-content:center;
+  padding-left:calc(var(--bu)*1.6);
+  border-left:calc(var(--bu)*.15) solid rgba(255,255,255,.14)}
+body:not(.land) .bowl .lbl{display:block;color:#ff9a5c;font-weight:900;font-size:calc(var(--bu)*1.4);letter-spacing:.2em;margin-bottom:calc(var(--bu)*.3)}
+body:not(.land) .bowl .bn{display:block;max-width:100%;font-size:calc(var(--bu)*2.3);font-weight:900;white-space:nowrap}
+body:not(.land) .balls{justify-content:flex-start;gap:calc(var(--bu)*.55);margin-top:calc(var(--bu)*.8);min-height:calc(var(--bu)*3)}
+body:not(.land) .b{width:calc(var(--bu)*3);height:calc(var(--bu)*3);font-size:calc(var(--bu)*1.7);flex:none}
+body:not(.land) .tgt{float:none;align-self:flex-start;margin-top:calc(var(--bu)*.9);font-size:calc(var(--bu)*1.7);padding:calc(var(--bu)*.35) calc(var(--bu)*1.2)}
+
+/* floating +runs sit above the taller bar */
+body:not(.land) .fl{bottom:calc(9vh + var(--u)*46)}
+
+/* LIVE pill: bigger and clearer on a phone stream */
+body:not(.land) #live{font-size:calc(var(--u)*3.6);padding:calc(var(--u)*1.2) calc(var(--u)*3);animation:livepulse 1.6s ease-in-out infinite}
+
+/* player / bowler card: wider, bigger numbers */
+body:not(.land) #card{width:calc(var(--u)*92);height:calc(var(--u)*70) !important;min-height:calc(var(--u)*70) !important;max-height:calc(var(--u)*70) !important;padding:calc(var(--u)*3.4)}
+body:not(.land) .cname{font-size:calc(var(--u)*6)}
+body:not(.land) .ci{width:calc(var(--u)*12);height:calc(var(--u)*12);font-size:calc(var(--u)*6.5)}
+body:not(.land) .sb b{font-size:calc(var(--u)*8)}
+body:not(.land) .sb:nth-child(6) b{font-size:calc(var(--u)*5)}
+body:not(.land) .sb span{font-size:calc(var(--u)*2.5);letter-spacing:.08em}
+
+/* full scoreboard: same edges as the bar, stats wrap to their own line */
+body:not(.land) #board{left:calc(var(--u)*2.5 + var(--sx,0px));right:calc(var(--u)*2.5 - var(--sx,0px))}
+body:not(.land) .row{flex-wrap:wrap;row-gap:calc(var(--u)*.2)}
+body:not(.land) .row .n{flex:1 1 55%}
+body:not(.land) .row .x{flex:1 0 100%;order:3}
+body:not(.land) .ov{flex-wrap:wrap;row-gap:calc(var(--u)*.6)}
+body:not(.land) .ov .bw{width:calc(var(--u)*24)}
+body:not(.land) .ov .bs{flex:1 1 100%;order:5}
+
 /* ---------- KEYFRAMES ---------- */
 @keyframes slide{to{background-position:200% 0}}
 @keyframes blink{50%{opacity:.25}}
@@ -200,6 +297,8 @@ body.land .ov .bs .b{width:calc(var(--u)*2.8);height:calc(var(--u)*2.8);font-siz
 @keyframes bigpop{0%{transform:scale(.1) rotate(-20deg);opacity:0}18%{transform:scale(1.12) rotate(3deg);opacity:1}28%{transform:scale(1) rotate(0)}82%{transform:scale(1);opacity:1}100%{transform:scale(1.8);opacity:0}}
 @keyframes ring{0%{transform:scale(.3);opacity:.9}100%{transform:scale(3.2);opacity:0}}
 @keyframes burst{0%{transform:translate(-50%,-50%) scale(0);opacity:1}70%{opacity:1}100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(1.3) rotate(220deg);opacity:0}}
+@keyframes scoreglow{0%,100%{filter:drop-shadow(0 0 calc(var(--bu)*.5) rgba(0,210,255,.35))}50%{filter:drop-shadow(0 0 calc(var(--bu)*1.8) rgba(0,255,136,.7))}}
+@keyframes livepulse{0%,100%{box-shadow:0 0 calc(var(--u)*3) rgba(255,45,85,.6)}50%{box-shadow:0 0 calc(var(--u)*7) rgba(255,45,85,1)}}
 </style>
 </head>
 <body>
@@ -244,7 +343,7 @@ body.land .ov .bs .b{width:calc(var(--u)*2.8);height:calc(var(--u)*2.8);font-siz
   var SHIFT_X_LANDSCAPE = 0;  // move the bar right (+) or left (-) in landscape
   var LOGO_EXTRA_RIGHT = 0;   // extra gap (in u) between the icon and the right edge of the score bar (0 = flush with the bar's right edge)
   var CARD_GAP = 1.5;         // gap (in u) between the top of the score bar and the bottom of the full scoreboard
-  var BAR_SCALE_PORTRAIT = 2; // score bar size multiplier in portrait (1 = normal, 2 = double height + text). Landscape always stays 1.
+  var BAR_SCALE_PORTRAIT = 1.6; // score bar size multiplier in portrait (the portrait layout is tuned for 1.6; try ?bar=1.4 or ?bar=1.8). Landscape always stays 1.
   /* places the logo image is tried from, in this order (the first one that loads wins) */
   /* Your logo, embedded as base64 so it needs no network at all.
      Fill it automatically with:   python3 embed_logo.py overlay.html cr.png
