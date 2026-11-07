@@ -1,0 +1,75 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>overlay-video</title>
+<style>
+  html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#000}
+  /* layer 0: the camera feed (received from the app over a local WebRTC loopback) */
+  #vid{position:fixed;left:0;top:0;width:100%;height:100%;object-fit:cover;background:#000;z-index:0}
+  /* layer 1: your existing overlay.html, transparent, same size */
+  #ov{position:fixed;left:0;top:0;width:100%;height:100%;border:0;background:transparent;z-index:1}
+</style>
+</head>
+<body>
+<video id="vid" autoplay muted playsinline></video>
+<iframe id="ov" allowtransparency="true" scrolling="no"></iframe>
+
+<script>
+(function(){
+  /* ---------- 1) load overlay.html (same folder) with the SAME query string (?o=landscape&w=..&h=..) ---------- */
+  var ov = document.getElementById('ov');
+  ov.src = 'overlay.html' + location.search;
+
+  /* ---------- 2) forward every overlay function to the iframe ----------
+     The app calls window.updateScore(...), window.toggleBoard(...), etc. on THIS page.
+     We pass them straight to overlay.html inside the iframe. */
+  ['updateScore','setLive','toggleBoard','showPlayer','showBowler','showLastBall','hideCards'].forEach(function(name){
+    window[name] = function(){
+      try {
+        var w = ov.contentWindow;
+        if (w && typeof w[name] === 'function') return w[name].apply(w, arguments);
+      } catch (e) {}
+    };
+  });
+
+  /* ---------- 3) receive the video from the app ---------- */
+  var pc = null, vid = document.getElementById('vid');
+
+  function post(o){
+    try { if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage(JSON.stringify(o)); } catch (e) {}
+  }
+
+  window.rtcOffer = async function(sdp){
+    try {
+      if (pc) { try { pc.close(); } catch (e) {} }
+      pc = new RTCPeerConnection({ iceServers: [] });           // same phone: no STUN/TURN needed
+      pc.ontrack = function(e){
+        vid.srcObject = (e.streams && e.streams[0]) || new MediaStream([e.track]);
+        var p = vid.play(); if (p && p.catch) p.catch(function(){});
+        post({ t: 'track' });
+      };
+      pc.oniceconnectionstatechange = function(){ post({ t: 'ice', s: pc.iceConnectionState }); };
+      await pc.setRemoteDescription({ type: 'offer', sdp: sdp });
+      var ans = await pc.createAnswer();
+      await pc.setLocalDescription(ans);
+      await new Promise(function(res){
+        if (pc.iceGatheringState === 'complete') return res();
+        pc.onicegatheringstatechange = function(){ if (pc.iceGatheringState === 'complete') res(); };
+        setTimeout(res, 2000);
+      });
+      post({ t: 'answer', sdp: pc.localDescription.sdp });
+    } catch (err) { post({ t: 'err', m: String((err && err.message) || err) }); }
+  };
+
+  window.rtcClose = function(){
+    try { if (pc) pc.close(); } catch (e) {}
+    pc = null; vid.srcObject = null;
+  };
+
+  window.__overlayVideoReady = true;
+})();
+</script>
+</body>
+</html>
