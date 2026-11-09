@@ -1,1 +1,98 @@
-.
+{
+  "expo": {
+    "name": "localcricketscoringapp",
+    "slug": "localcricketscoringapp",
+    "version": "1.1.31",
+    "orientation": "portrait", 
+    "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
+
+    "plugins": [ 
+      "react-native-browser-cam",
+      "expo-build-properties",
+      ["expo-navigation-bar",
+  {
+    "enforceContrast": true,
+    "hidden": false,
+    "style": "dark"
+  }],
+      ["expo-camera", {
+    "cameraPermission": "Allow Local Cricket Scoring App to use the camera for live streaming.",
+    "microphonePermission": "Allow Local Cricket Scoring App to use the microphone for live streaming.",
+    "recordAudioAndroid": true
+  }],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Local Cricket Scoring App to access your photos for sharing."
+        }
+      ],
+      "expo-font",
+      "expo-secure-store",
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-8386199132455283~7955261112",
+          "iosAppId": "ca-app-pub-8386199132455283~7955261112"
+        }
+      ]
+    ], 
+    "updates": {
+      "url": "https://u.expo.dev/8fcea6a4-85ce-452c-bbea-c5b5cfa50eb5"
+    },
+
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.rafiullahkh.lcsa",
+      "splash": {
+        "image": "./assets/splash.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#ffffff"
+      }
+    },
+
+    "android": {
+      "package": "com.rafiullahkh.lcsa",
+      "versionCode": 131,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "splash": {
+        "image": "./assets/splash.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#ffffff"
+      },
+      "permissions": [
+        "android.permission.BLUETOOTH_CONNECT",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION"
+      ]
+    },
+
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+
+    "extra": {
+      "eas": {
+        "projectId": "51a3f052-3d29-4da4-a6f3-b09ab7fe1285"
+      }
+    },
+
+    "doctor": {
+      "reactNativeDirectoryCheck": {
+        "exclude": [
+          "expo-av",
+          "react-native-tcp-socket",
+          "react-native-webrtc"
+        ]
+      }
+    }
+  }
+}
